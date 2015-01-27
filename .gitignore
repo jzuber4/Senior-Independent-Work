@@ -3,3 +3,6 @@
 
 # temporary database
 db.sqlite3
+
+# Cached files for compressor 
+CACHE

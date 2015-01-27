@@ -36,6 +36,10 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # extra dependencies
+    'bootstrap3',
+    'compressor',
+    # my app(s)
     'trees',
 )
 
@@ -74,11 +78,26 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_L10N = True
-
 USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
+# search each app directory for static files
+STATIC_ROOT = ''
+# static files stored under /static/ for each app
 STATIC_URL = '/static/'
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    # other finders..
+    'compressor.finders.CompressorFinder',
+)
+# add precompilers for coffeescript, etc.
+COMPRESS_PRECOMPILERS = (
+    ('text/coffeescript', 'coffee --compile --stdio'),
+)
+
+# Directories containing templates
+TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
