@@ -1,8 +1,10 @@
 # compiled files
 *.pyc
 
-# temporary database
+# database stuff
 db.sqlite3
+migrations/
 
 # Cached files for compressor 
 CACHE
+
