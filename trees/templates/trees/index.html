@@ -7,6 +7,7 @@
 <script type="text/coffeescript" charset="utf-8" src="{% static "trees/scripts/trees.coffee" %}"></script>
 <script type="text/coffeescript" charset="utf-8">
 $ -> 
+    tree = new Tree("treeContainer", {{ structure }})
 
 </script>
 {% endcompress %}
@@ -15,5 +16,7 @@ $ ->
 {% block title %}Index{% endblock %} 
 
 {% block content %}
+<p>{{prompt}}</p>
+<div id="treeContainer"></div>
 {% endblock %}
 

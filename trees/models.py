@@ -10,7 +10,3 @@ class Question(models.Model):
     # json of answer
     answer = models.TextField()
 
-    @classmethod
-    def create(cls, prompt, structure, answer):
-        book = cls(prompt=prompt, structure=structure, answer=answer)
-        return book
