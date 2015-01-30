@@ -52,7 +52,7 @@ class @Tree
 
         # Enter any new nodes at the parent's previous position
         nodeEnter = node.enter().append("g")
-            .attr("transform", (d) => "translate(#{@root.x0},#{@root.y0})")
+            .attr("transform", (d) => "translate(#{d.x},#{d.y})")
             .attr("class", (d) =>
                 if (@selectedNodes.indexOf d) != -1
                     "node selected"
@@ -85,7 +85,6 @@ class @Tree
         # Transition exiting nodes to the parent's new position
         nodeExit = node.exit().transition()
             .duration(@duration)
-            .attr("transform", "translate(#{@root.x},#{@root.y})")
             .remove()
 
         nodeExit.select("circle")
@@ -101,23 +100,19 @@ class @Tree
         # Enter any new links at the parents previous position
         link.enter().insert("path", "g")
             .attr("class", "link")
-            .attr("d", (d) =>
-                o = {x: @root.x0, y: @root.y0}
-                @diagonal({source: o, target: o})
-            )
+            .attr("d", @diagonal)
+            .style("stroke-opacity", 1e-6)
 
         # Transition links to their new position.
         link.transition()
             .duration(@duration)
+            .style("stroke-opacity", 1)
             .attr("d", @diagonal)
 
         # Transition exiting nodes to the parent's new position
         link.exit().transition()
             .duration(@duration)
-            .attr("d", (d) =>
-                o = {x: @root.x, y: @root.y}
-                @diagonal({source: o, target: o})
-            )
+            .style("stroke-opacity", 1e-6)
             .remove()
 
         # Stash the old positions for transition
