@@ -1,11 +1,23 @@
 .node {
     cursor: pointer;
 }
+.node.invalid {
+    cursor: default;
+}
 
 .node circle {
     fill: #fff;
     stroke: steelblue;
     stroke-width: 2.5px;
+}
+
+.node.clicked circle {
+    fill: lightsteelblue;
+}
+
+.node.invalid circle {
+    stroke-dasharray: 3;
+    stroke: grey;
 }
 
 .node text {

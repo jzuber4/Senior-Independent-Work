@@ -1,5 +1,5 @@
 class @Tree
-    constructor: (@divId, data) ->
+    constructor: (@divId, data, @click) ->
         @duration = 750
         @i = 0
 
@@ -21,7 +21,7 @@ class @Tree
             .attr("transform", "translate(#{@margin.left},#{@margin.top})")
 
         # make tree
-        @root = data[0]
+        @root = data
         @root.x0 = @width / 2
         @root.y0 = 0
         @update @root
@@ -41,12 +41,12 @@ class @Tree
 
         # Enter any new nodes at the parent's previous position
         nodeEnter = node.enter().append("g")
-            .attr("class", "node")
+            .attr("class", (d) -> if d.name? then "node" else "node invalid")
             .attr("transform", (d) -> "translate(#{source.x0},#{source.y0})")
+            .on("click", @click)
 
         nodeEnter.append("circle")
             .attr("r", 1e-6)
-            .style("fill", "#fff")
 
         nodeEnter.append("text")
             .attr("text-anchor", "middle")
