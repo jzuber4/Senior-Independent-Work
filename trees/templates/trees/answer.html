@@ -1,7 +1,20 @@
 {% extends "trees/base.html" %}
 {% load staticfiles %}
+{% load compress %}
 
 {% block title %}Answer{% endblock %} 
+
+{% block js %}
+{{ block.super }}
+{% compress js %}
+<script type="text/coffeescript" charset="utf-8" src="{% static "trees/scripts/trees.coffee" %}"></script>
+<script type="text/coffeescript">
+$ -> 
+    tree = new Tree("treeContainer", {{structure|safe}})
+    _.each {{ answer|safe }}, (a) -> tree.select(tree.get(a)[0]) 
+</script>
+{% endcompress %}
+{% endblock %}
 
 {% block content %}
 <h2>{{ message }}</h2>
@@ -12,13 +25,15 @@
     {% if error %}
         Your answer "{{ user_answer }}" caused an error. 
     {% else %}
-        Sorry, your answer "{{ user_answer }}" did not match the answer: 
-        {{ answer }}
+        Your answer "{{ user_answer }}" did not match the answer: 
+        "{{ answer }}".
     {% endif %}
 {% endif %}
 </p>
 <a class="btn btn-primary" href="{% url 'trees.views.question' %}">
-    Try again?
+    Try new question?
 </a>
+<div id="treeContainer">
+</div>
 {% endblock %}
 

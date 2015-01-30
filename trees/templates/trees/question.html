@@ -8,28 +8,32 @@
 <script type="text/coffeescript" charset="utf-8" src="{% static "trees/scripts/trees.coffee" %}"></script>
 <script type="text/coffeescript">
 $ ->
-    answer = []
     # clear preset value, question is likely new
     $("#inputAnswer").val("")
 
-    # click function that allows user to select nodes (and fill input)
-    onClick = (d) ->
-        # only do for valid nodes
-        if not d.name?
-            return
-        
-        # select or deselect node
-        if answer.indexOf(d.name) != -1
-            d3.select(this).attr("class", "node")
-            answer.splice(answer.indexOf(d.name), 1)
-        else
-            d3.select(this).attr("class", "node clicked")
-            answer.push(d.name)
+    tree = new Tree("treeContainer", {{structure|safe}});        
 
-        $("#inputAnswer").val(answer.join(","))
-        
-        
-    tree = new Tree("treeContainer", {{structure|safe}}, onClick);        
+    # click function that allows user to select nodes (and fill input)
+    answer = []
+    onClick = (d) ->
+        # disallow nodes without names
+        unless d.name?
+            return
+
+        # toggle selected status of node
+        index = answer.indexOf d.name
+        if index == -1
+            tree.select tree.get(d.name)[0]
+            answer.push d.name
+        else
+            tree.deselect tree.get(d.name)[0]
+            answer.splice index, 1
+
+        # update answer
+        $("#inputAnswer").val answer
+
+    tree.nodeOnClick onClick
+       
 </script>
 {% endcompress %}
 {% endblock %}

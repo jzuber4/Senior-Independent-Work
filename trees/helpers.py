@@ -67,6 +67,8 @@ def make_search_question():
     # range of integers
     lo = 0
     hi = 100
+    # number of nodes
+    N = 20
 
     # choose number to be searched for
     choice = randint(lo, hi)
@@ -85,7 +87,7 @@ def make_search_question():
 
     # make the tree
     root = BNode(randint(lo, hi))
-    for _ in range(10):
+    for _ in range(N - 1):
         root.insert(randint(lo,hi), compare)
 
     # define compare function that tracks the items compared against

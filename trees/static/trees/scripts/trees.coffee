@@ -1,7 +1,9 @@
 class @Tree
-    constructor: (@divId, data, @click) ->
+    constructor: (@divId, data) ->
+        @selectedNodes = []
         @duration = 750
         @i = 0
+        @nodeClick = (() ->)
 
         # create the space containing the tree
         @margin = {top: 50, right: 50, left: 50, bottom: 50}
@@ -24,9 +26,9 @@ class @Tree
         @root = data
         @root.x0 = @width / 2
         @root.y0 = 0
-        @update @root
+        do @update
 
-    update: (source) ->
+    update: () ->
         # compute the new tree layout
         nodes = @tree.nodes(@root).reverse()
         links = @tree.links(nodes)
@@ -35,15 +37,30 @@ class @Tree
         maxdepth = d3.max(nodes, (n) -> n.depth)
         nodes.forEach((d) => d.y = d.depth * .5 * (@height / maxdepth))
 
-        # update the nodes
+        # update the nodes data and click function
         node = @svg.selectAll("g.node")
             .data(nodes, (d) => (d.id || d.id = ++@i))
+            .on("click", @nodeClick)
+            .attr("class", (d) =>
+                if (@selectedNodes.indexOf d) != -1
+                    "node selected"
+                else if d.name?
+                    "node"
+                else
+                    "node invalid"
+            )
 
         # Enter any new nodes at the parent's previous position
         nodeEnter = node.enter().append("g")
-            .attr("class", (d) -> if d.name? then "node" else "node invalid")
-            .attr("transform", (d) -> "translate(#{source.x0},#{source.y0})")
-            .on("click", @click)
+            .attr("transform", (d) => "translate(#{@root.x0},#{@root.y0})")
+            .attr("class", (d) =>
+                if (@selectedNodes.indexOf d) != -1
+                    "node selected"
+                else if d.name?
+                    "node"
+                else
+                    "node invalid"
+            )
 
         nodeEnter.append("circle")
             .attr("r", 1e-6)
@@ -68,7 +85,7 @@ class @Tree
         # Transition exiting nodes to the parent's new position
         nodeExit = node.exit().transition()
             .duration(@duration)
-            .attr("transform", "translate(#{source.x},#{source.y})")
+            .attr("transform", "translate(#{@root.x},#{@root.y})")
             .remove()
 
         nodeExit.select("circle")
@@ -85,7 +102,7 @@ class @Tree
         link.enter().insert("path", "g")
             .attr("class", "link")
             .attr("d", (d) =>
-                o = {x: source.x0, y: source.y0}
+                o = {x: @root.x0, y: @root.y0}
                 @diagonal({source: o, target: o})
             )
 
@@ -98,7 +115,7 @@ class @Tree
         link.exit().transition()
             .duration(@duration)
             .attr("d", (d) =>
-                o = {x: source.x, y: source.y}
+                o = {x: @root.x, y: @root.y}
                 @diagonal({source: o, target: o})
             )
             .remove()
@@ -109,6 +126,60 @@ class @Tree
             d.y0 = d.y
         )
 
+    # get node(s) by name, return [] if none contained
+    get: (name) =>
+        found = []
+        get = (node, name) ->
+            if name == node.name
+                found.push node
+            _.each node.children, (child) -> get(child, name)
+        get @root, name
+
+        found
+
+    # recursively search tree for node with name
+    contains: (name) =>
+        contains = (node, name) ->
+            if name == node.name
+                true
+            else
+                _.some node.children, (child) -> contains(child, name)
+
+        contains @root, name
+
+    # select nodes and redraw
+    selectArray: (nodes) =>
+        @selectedNodes = nodes
+        do @update
+
+    # select node redraw
+    select: (node) =>
+        # add element if contained
+        if (@selectedNodes.indexOf node) == -1
+            @selectedNodes.push node
+            console.log @selectedNodes
+            do @update
+
+    # deselect node
+    deselect: (node) =>
+        index = @selectedNodes.indexOf node
+        if index != -1
+            @selectedNodes.splice index, 1
+            do @update
+
+    # deselect all nodes and redraw
+    deselectAll: () =>
+        @selectedNodes = []
+        do @update
+
+    # get all selected nodes
+    selected: () =>
+        @selectedNodes
+
+    # set on-click function for each node
+    nodeOnClick: (f) =>
+        @nodeClick = f
+        do @update
 
 
 
