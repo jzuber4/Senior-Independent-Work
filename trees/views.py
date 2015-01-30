@@ -44,6 +44,15 @@ def question(request, pk=None):
         if user_answer is None:
             user_answer = ""
 
+        # get corresponding question / answer
+        question = get_object_or_404(Question, pk=pk)
+        # deserialize answer
+        answer = json.loads(question.answer)
+        # save for template
+        d['answer'] = answer
+        d['structure'] = question.structure
+
+
         try:
             # convert comma separated string of numbers to list of integers
             # filter out empty strings
@@ -56,22 +65,12 @@ def question(request, pk=None):
             d['user_answer'] = user_answer
             return render(request, 'trees/answer.html', d)
 
+        d['user_answer'] = user_answer
         d['error'] = False
-
-        # get corresponding question / answer
-        question = get_object_or_404(Question, pk=pk)
-        d['structure'] = question.structure
-
-        # deserialize answer
-        answer = json.loads(question.answer)
 
         # test for equivalence of answers
         correct = len(user_answer) == len(answer)
         correct &= all((a == b for (a,b) in zip(user_answer, answer)))
-
-        # save for template
-        d['answer'] = answer
-        d['user_answer'] = user_answer
 
         # return status
         if correct:
