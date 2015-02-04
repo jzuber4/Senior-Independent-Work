@@ -121,6 +121,50 @@ class @Tree
             d.y0 = d.y
         )
 
+    # rotates the node (assumes binary tree) and redraws.
+    # left or right depends on which side the child is on
+    rotate: (node) =>
+        unless node.parent?
+            throw new Error("node needs parent to be rotated")
+
+        parent = node.parent
+        grandparent = parent.parent
+
+        # rotate and change children
+        swapped = null
+        if parent.children[0] == node
+            # rotate right
+            swapped = node.children[1]
+            node.children[1] = parent
+            parent.children[0] = swapped
+
+        else if parent.children[1] == node
+            # rotate left
+            swapped = node.children[0]
+            node.children[0] = parent
+            parent.children[1] = swapped
+        else
+            throw new Error("tree must be a binary tree")
+
+        # change parents
+        parent.parent = node
+        swapped.parent = parent
+        node.parent = grandparent
+
+        # set child of grandparent (node will be root if it doesn't exist)
+        if grandparent?
+            if grandparent.children[0] == parent
+                grandparent.children[0] = node
+            else if grandparent.children[1] == parent
+                grandparent.children[1] = node
+            else
+                throw new Error("tree must be a binary tree")
+        else
+            @root = node
+
+        do @update
+
+
     # get node(s) by name, return [] if none contained
     get: (name) =>
         found = []
@@ -132,7 +176,7 @@ class @Tree
 
         found
 
-    # recursively search tree for node with name
+    # recursively search whole tree for node with name
     contains: (name) =>
         contains = (node, name) ->
             if name == node.name
@@ -152,7 +196,6 @@ class @Tree
         # add element if contained
         if (@selectedNodes.indexOf node) == -1
             @selectedNodes.push node
-            console.log @selectedNodes
             do @update
 
     # deselect node
