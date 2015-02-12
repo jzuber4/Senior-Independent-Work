@@ -51,6 +51,8 @@ def question(request, pk=None):
         # save for template
         d['answer'] = answer
         d['structure'] = question.structure
+        if q_type == Question.BSTINSERT
+
 
 
         try:

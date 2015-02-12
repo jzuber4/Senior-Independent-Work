@@ -1,5 +1,9 @@
 class @Tree
-    constructor: (@divId, data) ->
+    # divId specifies div that tree will inhabit
+    # data is data representing tree
+    # prefix is namespace prefix to prevent collision with
+    # other properties stored on the objects in the tree
+    constructor: (@divId, data, @prefix="TREE") ->
         @selectedNodes = []
         @duration = 750
         @i = 0
@@ -22,11 +26,43 @@ class @Tree
           .append("g")
             .attr("transform", "translate(#{@margin.left},#{@margin.top})")
 
+        Tree.assertValid data
+
         # make tree
         @root = data
         @root.x0 = @width / 2
         @root.y0 = 0
         do @update
+
+    # static function, validates whether data represents valid tree
+    # throws error if invalid
+    @assertValid: (data) ->
+        dedupKey = @prefix + "dedup"
+        root = data
+
+        # recursively check
+        assertValid = (node, parent) ->
+            # node must have children defined
+            unless node.children?
+                throw new Error("Tree: node must have property \"children\"")
+
+            # node must not already have been seen (no cycles)
+            if node[dedupKey]?
+                throw new Error("Tree: tree must not contain cycles")
+            node[dedupKey] = true
+
+            # all subtrees must be valid
+            _.each node.children, (child) -> assertValid child, node.name
+
+        # cleanup function
+        removeDedup = (node) ->
+            delete node[dedupKey]
+            _.each node.children, (child) -> removeDedup child
+
+        # check if the data is valid, recursively
+        assertValid data, null
+        # remove dedupKeys that were added
+        removeDedup data
 
     update: () ->
         # compute the new tree layout
@@ -121,50 +157,6 @@ class @Tree
             d.y0 = d.y
         )
 
-    # rotates the node (assumes binary tree) and redraws.
-    # left or right depends on which side the child is on
-    rotate: (node) =>
-        unless node.parent?
-            throw new Error("node needs parent to be rotated")
-
-        parent = node.parent
-        grandparent = parent.parent
-
-        # rotate and change children
-        swapped = null
-        if parent.children[0] == node
-            # rotate right
-            swapped = node.children[1]
-            node.children[1] = parent
-            parent.children[0] = swapped
-
-        else if parent.children[1] == node
-            # rotate left
-            swapped = node.children[0]
-            node.children[0] = parent
-            parent.children[1] = swapped
-        else
-            throw new Error("tree must be a binary tree")
-
-        # change parents
-        parent.parent = node
-        swapped.parent = parent
-        node.parent = grandparent
-
-        # set child of grandparent (node will be root if it doesn't exist)
-        if grandparent?
-            if grandparent.children[0] == parent
-                grandparent.children[0] = node
-            else if grandparent.children[1] == parent
-                grandparent.children[1] = node
-            else
-                throw new Error("tree must be a binary tree")
-        else
-            @root = node
-
-        do @update
-
-
     # get node(s) by name, return [] if none contained
     get: (name) =>
         found = []
@@ -219,13 +211,61 @@ class @Tree
         @nodeClick = f
         do @update
 
+class @BinaryTree extends Tree
+    constructor: (@divId, data, @prefix="TREE") ->
+        BinaryTree.assertValid data
+        super @divId, data
 
+    # validates whether data represents a valid binary tree
+    # throws error if invalid
+    @assertValid: (data) ->
 
+        # only added requirement is that there are at most 2 children
+        assertValid = (node) ->
+            if node.children.length > 2
+                throw new Error("BinaryTree: a node cannot have more than two children")
+            _.all node.children, (child) -> assertValid child
 
+        # validate as tree
+        super data
+        # validate as binary tree
+        assertValid data
 
+    # rotates the node (assumes binary tree) and redraws.
+    # left or right depends on which side the child is on
+    rotate: (node) =>
+        unless node.parent?
+            return # root cannot be rotated
 
+        parent = node.parent
+        grandparent = parent.parent
 
+        # rotate and change children
+        swapped = null
+        if parent.children[0] == node
+            # rotate right
+            swapped = node.children[1]
+            node.children[1] = parent
+            parent.children[0] = swapped
 
+        else
+            # rotate left
+            swapped = node.children[0]
+            node.children[0] = parent
+            parent.children[1] = swapped
 
+        # change parents
+        parent.parent = node
+        swapped.parent = parent
+        node.parent = grandparent
 
+        # set child of grandparent (node will be root if it doesn't exist)
+        if grandparent?
+            if grandparent.children[0] == parent
+                grandparent.children[0] = node
+            else
+                grandparent.children[1] = node
+        else
+            @root = node
 
+        do @update
