@@ -13,8 +13,9 @@ $ ->
     $("#inputAnswer").val("")
 
     {% if BSTSEARCH %}
-    InitQuestionBSTSearch("treeContainer", {{structure|safe}})        
-    {% else if BSTINSERT %}
+    InitQuestionBSTSearch("treeContainer", {{structure|safe}}) 
+    {% endif %}
+    {% if BSTINSERT %}
     InitQuestionBSTInsert("treeContainer", {{structure|safe}})
     {% endif %}
        

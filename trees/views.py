@@ -51,38 +51,36 @@ def question(request, pk=None):
         # save for template
         d['answer'] = answer
         d['structure'] = question.structure
-        if q_type == Question.BSTINSERT
 
+        if q_type == Question.BSTINSERT:
+            try:
+                # convert comma separated string of numbers to list of integers
+                # filter out empty strings
+                user_answer = [int(s.strip()) for s in user_answer.split(',') if s.strip()]
+            except ValueError:
+                d['message'] = 'Invalid input, ' + \
+                    'answer needs to be a string of integers separated by commas.'
+                d['success'] = False
+                d['error'] = True
+                d['user_answer'] = user_answer
+                return render(request, 'trees/answer.html', d)
 
-
-        try:
-            # convert comma separated string of numbers to list of integers
-            # filter out empty strings
-            user_answer = [int(s.strip()) for s in user_answer.split(',') if s.strip()]
-        except ValueError:
-            d['message'] = 'Invalid input, ' + \
-                'answer needs to be a string of integers separated by commas.'
-            d['success'] = False
-            d['error'] = True
             d['user_answer'] = user_answer
+            d['error'] = False
+
+            # test for equivalence of answers
+            correct = len(user_answer) == len(answer)
+            correct &= all((a == b for (a,b) in zip(user_answer, answer)))
+
+            # return status
+            if correct:
+                d['message'] = 'Correct!'
+                d['success'] = True
+            else:
+                d['message'] = 'Sorry, that was incorrect.'
+                d['success'] = False
+
             return render(request, 'trees/answer.html', d)
-
-        d['user_answer'] = user_answer
-        d['error'] = False
-
-        # test for equivalence of answers
-        correct = len(user_answer) == len(answer)
-        correct &= all((a == b for (a,b) in zip(user_answer, answer)))
-
-        # return status
-        if correct:
-            d['message'] = 'Correct!'
-            d['success'] = True
-        else:
-            d['message'] = 'Sorry, that was incorrect.'
-            d['success'] = False
-
-        return render(request, 'trees/answer.html', d)
 
 
 

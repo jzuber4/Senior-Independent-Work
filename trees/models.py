@@ -12,7 +12,8 @@ class Question(models.Model):
 
     # type of question displayed
     q_type = models.CharField(max_length=2,
-                              choices = Q_TYPE_CHOICES)
+                              choices = Q_TYPE_CHOICES,
+                              default = BSTSEARCH,)
 
     # text for prompt
     prompt = models.CharField(max_length=200)
