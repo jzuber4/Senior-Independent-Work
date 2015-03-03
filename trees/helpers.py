@@ -58,10 +58,23 @@ class BNode:
 
         return {'name': self.item, 'children': children}
 
+# define normal compare function
+def compare(a, b):
+    if a < b:
+        return -1
+    elif a == b:
+        return 0
+    else:
+        return 1
+
 
 def make_tree_question():
     # only search questions so far
-    return make_search_question()
+    roll = randint(0,1)
+    if roll == 0:
+        return make_search_question()
+    else:
+        return make_insert_question()
 
 def make_insert_question():
     # range of integers
@@ -90,10 +103,42 @@ def make_insert_question():
     structure = json.dumps(sequence)
 
     # create model
-    q_type = Question.BSTSEARCH
+    q_type = "search"
     question = Question(q_type=q_type, prompt=prompt,
                         structure=structure, answer=answer)
     return question
+
+def make_insert_question():
+    # range of integers
+    lo = 0
+    hi = 100
+    # number of nodes
+    N = 10
+
+    # numbers to insert
+    numbers = []
+    for _ in range(N):
+        choice = randint(lo, hi)
+        while choice in numbers:
+            choice = randint(lo, hi)
+        numbers.append(choice)
+
+    # make the prompt
+    prompt = "Given the numbers {0}, click on empty nodes to insert them in the tree.".format(numbers[1:])
+
+    root = BNode(numbers[0])
+    for num in numbers[1:]:
+        root.insert(num, compare)
+
+    answer = json.dumps(root.to_serializable())
+    structure = json.dumps(numbers)
+    q_type = "insert"
+
+    # create model
+    question = Question(q_type=q_type, prompt=prompt,
+                        structure=structure, answer=answer)
+    return question
+
 
 def make_search_question():
     # range of integers
@@ -107,15 +152,6 @@ def make_search_question():
 
     # make the prompt
     prompt = "Given the following BST, suppose that you search for the key {0}. What is the sequence of keys in the BST that are compared to {0}?".format(choice)
-
-    # define normal compare function
-    def compare(a, b):
-        if a < b:
-            return -1
-        elif a == b:
-            return 0
-        else:
-            return 1
 
     # make the tree
     root = BNode(randint(lo, hi))
@@ -136,7 +172,7 @@ def make_search_question():
     answer = json.dumps(c)
 
     # create model
-    q_type = Question.BSTSEARCH
+    q_type = "search"
     question = Question(q_type=q_type, prompt=prompt,
                         structure=structure, answer=answer)
     return question

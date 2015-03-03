@@ -12,10 +12,10 @@ class @Tree
         # create the space containing the tree
         @margin = {top: 50, right: 50, left: 50, bottom: 50}
         @width  = $("##{@divId}").width() - @margin.left - @margin.right
-        @height = @width - @margin.top - @margin.bottom
+        @height = @width - @margin.top - @margin.bottom - 200
 
         @tree = d3.layout.tree()
-            .size([@height, @width])
+            .size([@width, @height])
 
         @diagonal = d3.svg.diagonal()
             .projection((d) -> [d.x, d.y])
@@ -89,6 +89,7 @@ class @Tree
         # Enter any new nodes at the parent's previous position
         nodeEnter = node.enter().append("g")
             .attr("transform", (d) => "translate(#{d.x},#{d.y})")
+            .on("click", @nodeClick)
             .attr("class", (d) =>
                 if (@selectedNodes.indexOf d) != -1
                     "node selected"
@@ -117,6 +118,7 @@ class @Tree
 
         nodeUpdate.select("text")
             .style("fill-opacity", 1)
+            .text((d) -> d.name)
 
         # Transition exiting nodes to the parent's new position
         nodeExit = node.exit().transition()
@@ -157,6 +159,21 @@ class @Tree
             d.y0 = d.y
         )
 
+    # converts tree into easily serializable representation
+    toSerializable: () =>
+        toSerializable = (curr) ->
+            if curr.children?
+                {
+                    name: curr.name
+                    children: (toSerializable child for child in curr.children)
+                }
+            else
+                {
+                    name: curr.name
+                    children: []
+                }
+        toSerializable @root
+
     # get node(s) by name, return [] if none contained
     get: (name) =>
         found = []
@@ -167,6 +184,15 @@ class @Tree
         get @root, name
 
         found
+
+    # apply a function f to each node
+    each: (f) =>
+        each = (node) ->
+            f node
+            if node.children?
+                _.each node.children, (child) -> each child
+        each @root
+
 
     # recursively search whole tree for node with name
     contains: (name) =>
@@ -230,6 +256,12 @@ class @BinaryTree extends Tree
         super data
         # validate as binary tree
         assertValid data
+
+    insert: (node, name) =>
+        node.name = name
+        node.children = [{name:null,parent:node,children:[]},{name:null,parent:node,children:[]}]
+        do @update
+
 
     # rotates the node (assumes binary tree) and redraws.
     # left or right depends on which side the child is on

@@ -10,8 +10,15 @@
 <script type="text/coffeescript" charset="utf-8" src="{% static "trees/scripts/trees.coffee" %}"></script>
 <script type="text/coffeescript">
 $ -> 
-    tree = new Tree("treeContainer", {{structure|safe}})
-    _.each {{ answer|safe }}, (a) -> tree.select(tree.get(a)[0]) 
+    {% if type == "search" %}
+    tree = new BinaryTree("treeContainer", {{structure|safe}})
+    _.each {{answer|safe}}, (a) -> tree.select(tree.get(a)[0]) 
+    {% endif %}
+
+    {% if type == "insert" %}
+    tree = new BinaryTree("treeContainer", {{answer|safe}})
+    {% endif %}
+
 </script>
 {% endcompress %}
 {% endblock %}
@@ -20,13 +27,12 @@ $ ->
 <h2>{{ message }}</h2>
 <p>
 {% if success %}
-    Good job, your answer "{{ user_answer }}" is correct!
+    Good job, your answer is correct!
 {% else %}
     {% if error %}
         Your answer "{{ user_answer }}" caused an error. 
     {% else %}
-        Your answer "{{ user_answer }}" did not match the answer: 
-        "{{ answer }}".
+        Your answer is incorrect.
     {% endif %}
 {% endif %}
 </p>

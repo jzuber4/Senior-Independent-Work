@@ -10,14 +10,26 @@
 <script type="text/coffeescript">
 $ ->
     # clear preset value, question is likely new
-    $("#inputAnswer").val("")
+    {% if type == "search" %}
+    question = new BSTSearchQuestion("treeContainer", {{structure|safe}}) 
+    # update input when question is changed 
+    f = () ->
+        answers = question.submit().join ", "
+        $("#inputHuman").val(answers)
+    question.change f
+    # update question when input is changed
+    $("#inputHuman").change () -> 
+        success = question.update($("#inputHuman").val())
+        unless success
+            $("#inputHuman").val("")
+    {% else %}
+    {% if type == "insert" %}
+    question = new BSTInsertQuestion("treeContainer", {{structure|safe}})
+    {% endif %}
+    {% endif %}
 
-    {% if BSTSEARCH %}
-    InitQuestionBSTSearch("treeContainer", {{structure|safe}}) 
-    {% endif %}
-    {% if BSTINSERT %}
-    InitQuestionBSTInsert("treeContainer", {{structure|safe}})
-    {% endif %}
+    $("form").submit () -> 
+        $("#inputAnswer").val(JSON.stringify(question.submit()))
        
 </script>
 {% endcompress %}
@@ -29,11 +41,14 @@ $ ->
 <h1>Binary Search Trees</h1>
 <p>{{prompt}}</p>
 <p>Click to select nodes, or type in a comma separated series of keys.</p>
+{% if type == "search" %}
+<div class="form-group">
+    <input name="answer" type="text" class="form-control" id="inputHuman" placeholder="Answer">
+</div>
+{% endif %}
 <form action="{% url 'trees.views.question' pk %}" method="post" class="form">
     {% csrf_token %}
-    <div class="form-group">
-        <input name="answer" type="text" class="form-control" id="inputAnswer" placeholder="Answer">
-    </div>
+    <input name="answer" type="hidden" id="inputAnswer">
     <button type="submit" class="btn btn-primary">
         Submit
     </button>
