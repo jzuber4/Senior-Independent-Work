@@ -1,8 +1,7 @@
 # make a BST Search question with data in the div specified by divId
 class @BSTSearchQuestion
-    constructor: (divId, data, onChange) ->
+    constructor: (divId, data, @onChange = (() -> )) ->
         @tree = new BinaryTree(divId, data)
-        @onChange = onChange? onChange : (() -> )
 
         # click function that allows user to select nodes (and fill input)
         @answer = []
@@ -62,23 +61,122 @@ class @BSTSearchQuestion
 
 class @BSTInsertQuestion
 
-    constructor: (divId, data) ->
-        @tree = new BinaryTree(divId, {name: data[0], children: [{name: null, children: []}, {name: null, children: []}]})
+    constructor: (divId, @data, @change = (() -> )) ->
+
+        # dimensions and setup for making display of numbers
+        @width  = $("##{divId}").width()
+        @buttonSize = 100
+        @buttonMargin = 20
+        @numsHeight = 90
+        @largerRadius = 30
+        @circleRadius = 20
+        @circleMargin = 10
+        @duration = 500
+        # svg container for display
+
+        @svg = d3.select("##{divId}").append("svg")
+                .attr("width", @width)
+                .attr("height", @numsHeight)
 
         # sequence of keys to insert
-        nums = data[1..]
+        @nums = data[1..]
+
+        # create display of numbers
+        @update @nums
+
+        # create tree
+        treeData = {name: data[0], children: [{name: null, children: []}, {name: null, children: []}]}
+        @tree = new BinaryTree(divId, treeData)
+        @inserts = []
+
 
         onClick = (d) =>
             # can only insert in empty nodes
-            if d.name?
+            # and if there are numbers left to insert
+            if d.name? or not @nums[0]?
                 return
 
-            num = nums[0]
-            nums = nums[1..]
+            num = @nums[0]
+            @nums = @nums[1..]
 
+            @inserts.push(d)
             @tree.insert(d, num)
+            @update @nums
+            do @change
 
         @tree.nodeOnClick onClick
+
+    update: (data) =>
+
+        data = data.slice()
+        data.reverse()
+        node = @svg.selectAll("g.node")
+            .data(data)
+            .attr("class", "node")
+
+        nodeEnter = node.enter().append("g")
+                .attr("transform", (d, i) =>
+                    xShift = 1.5 * @largerRadius
+                    if i != data.length - 1
+                        xShift += @largerRadius + (data.length - 1 - i) * (2 * @circleRadius + @circleMargin)
+                    "translate(#{xShift},#{@numsHeight / 2})"
+                )
+                .attr("class", "node")
+
+        nodeEnter.append("circle")
+                .attr("r", (d, i) =>
+                    if i != data.length - 1
+                        @circleRadius
+                    else
+                        @largerRadius
+                )
+
+        nodeEnter.append("text")
+                .text((d) -> "#{d}")
+                .attr("y", 4)
+                .attr("text-anchor", "middle")
+
+        nodeUpdate = node.transition()
+            .duration(@duration)
+            .attr("transform", (d, i) =>
+                xShift = 1.5 * @largerRadius
+                if i != data.length - 1
+                    xShift += @largerRadius + (data.length - 1 - i) * (2 * @circleRadius + @circleMargin)
+                "translate(#{xShift},#{@numsHeight / 2})"
+            )
+
+        nodeUpdate.select("circle")
+                .attr("r", (d, i) =>
+                    if i != data.length - 1
+                        @circleRadius
+                    else
+                        @largerRadius
+                )
+
+        nodeExit = node.exit().transition()
+            .duration(@duration)
+            .remove()
+            .attr("transform", "translate(#{1.5 * @largerRadius},#{@numsHeight})")
+
+        nodeExit.select("circle")
+            .attr("r", 1e-6)
+
+        nodeExit.select("text")
+            .style("fill-opacity", 1e-6)
+
+    onChange: (f) =>
+        @change = f
+
+    canUndo: () =>
+        @inserts.length > 0
+
+    undo: () =>
+        if @canUndo()
+            d = @inserts.pop()
+            @tree.remove d
+            @nums.unshift d.name
+            @update @nums
+
 
     submit: () =>
         @tree.toSerializable()

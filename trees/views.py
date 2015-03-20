@@ -36,7 +36,11 @@ def question(request, pk=None):
             'structure': question.structure
         }
 
-        return render(request, 'trees/question.html', d)
+        if question.q_type == "insert":
+            return render(request, 'trees/questionInsert.html', d)
+        elif question.q_type == "search":
+            return render(request, 'trees/questionSearch.html', d)
+
     else:
         # POST - user is answering question
         user_answer = request.POST.get('answer')
@@ -51,7 +55,7 @@ def question(request, pk=None):
 
         # save for template
         d = {}
-        d['user_answer'] = user_answer
+        d['user_answer'] = json.dumps(user_answer)
         d['answer'] = question.answer
         d['structure'] = question.structure
         d['type'] = question.q_type
@@ -64,7 +68,10 @@ def question(request, pk=None):
             d['message'] = 'Sorry, that was incorrect.'
             d['success'] = False
 
-        return render(request, 'trees/answer.html', d)
+        if question.q_type == "insert":
+            return render(request, 'trees/answerInsert.html', d)
+        elif question.q_type == "search":
+            return render(request, 'trees/answerSearch.html', d)
 
 
 

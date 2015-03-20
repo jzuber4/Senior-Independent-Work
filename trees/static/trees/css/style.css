@@ -5,24 +5,34 @@
     cursor: default;
 }
 
-.node circle {
+circle {
     fill: #fff;
     stroke: steelblue;
     stroke-width: 2.5px;
 }
 
-.node.selected circle {
+.answer circle {
+    stroke: lime;
+    stroke-width: 5.0px;
+}
+rect {
+    fill: #fff;
+    stroke: steelblue;
+    stroke-width: 2.5px;
+}
+text {
+    font: 15px sans-serif;
+}
+
+.selected circle {
     fill: lightsteelblue;
 }
 
-.node.invalid circle {
+.invalid circle {
     stroke-dasharray: 3;
     stroke: grey;
 }
 
-.node text {
-    font: 15px sans-serif;
-}
 
 .link {
     fill: none;

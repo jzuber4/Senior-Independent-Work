@@ -3,16 +3,24 @@ class @Tree
     # data is data representing tree
     # prefix is namespace prefix to prevent collision with
     # other properties stored on the objects in the tree
-    constructor: (@divId, data, @prefix="TREE") ->
+    constructor: (@divId, data, options = {}) ->
         @selectedNodes = []
-        @duration = 750
+        @duration = options.duration ? 500
         @i = 0
-        @nodeClick = (() ->)
+        @nodeClick = options.nodeClick ? (() ->)
+        @radius = 20 ? options.radius
+        @xScale = options.xScale ? 1
+        @yScale = options.yScale ? 1
 
         # create the space containing the tree
-        @margin = {top: 50, right: 50, left: 50, bottom: 50}
-        @width  = $("##{@divId}").width() - @margin.left - @margin.right
-        @height = @width - @margin.top - @margin.bottom - 200
+        @margin = options.margin ? {
+            top:    options.marginTop    ? 50
+            right:  options.marginRight  ? 50
+            left:   options.marginLeft   ? 50
+            bottom: options.marginBottom ? 50
+        }
+        @width  = options.width  ? @xScale * ($("##{@divId}").width() - @margin.left - @margin.right)
+        @height = options.height ? @yScale * (@width - @margin.top - @margin.bottom - 200)
 
         @tree = d3.layout.tree()
             .size([@width, @height])
@@ -37,7 +45,6 @@ class @Tree
     # static function, validates whether data represents valid tree
     # throws error if invalid
     @assertValid: (data) ->
-        dedupKey = @prefix + "dedup"
         root = data
 
         # recursively check
@@ -47,22 +54,21 @@ class @Tree
                 throw new Error("Tree: node must have property \"children\"")
 
             # node must not already have been seen (no cycles)
-            if node[dedupKey]?
+            if node.seen?
                 throw new Error("Tree: tree must not contain cycles")
-            node[dedupKey] = true
+            node.seen = true
 
             # all subtrees must be valid
             _.each node.children, (child) -> assertValid child, node.name
 
-        # cleanup function
-        removeDedup = (node) ->
-            delete node[dedupKey]
-            _.each node.children, (child) -> removeDedup child
+        removeSeen = (node) ->
+            delete node.seen
+            _.each node.children, (child) -> removeSeen child
 
         # check if the data is valid, recursively
         assertValid data, null
-        # remove dedupKeys that were added
-        removeDedup data
+        # remove added property "seen"
+        removeSeen data
 
     update: () ->
         # compute the new tree layout
@@ -78,12 +84,15 @@ class @Tree
             .data(nodes, (d) => (d.id || d.id = ++@i))
             .on("click", @nodeClick)
             .attr("class", (d) =>
+                classes = ""
+                if d.classes?
+                    _.each d.classes, (c) -> classes = classes + c + " "
                 if (@selectedNodes.indexOf d) != -1
-                    "node selected"
+                    classes + "node selected"
                 else if d.name?
-                    "node"
+                    classes + "node"
                 else
-                    "node invalid"
+                    classes + "node invalid"
             )
 
         # Enter any new nodes at the parent's previous position
@@ -91,12 +100,15 @@ class @Tree
             .attr("transform", (d) => "translate(#{d.x},#{d.y})")
             .on("click", @nodeClick)
             .attr("class", (d) =>
+                classes = ""
+                if d.classes?
+                    _.each d.classes, (c) -> classes = classes + c + " "
                 if (@selectedNodes.indexOf d) != -1
-                    "node selected"
+                    classes + "node selected"
                 else if d.name?
-                    "node"
+                    classes + "node"
                 else
-                    "node invalid"
+                    classes + "node invalid"
             )
 
         nodeEnter.append("circle")
@@ -114,7 +126,7 @@ class @Tree
             .attr("transform", (d) -> "translate(#{d.x},#{d.y})")
 
         nodeUpdate.select("circle")
-            .attr("r", 20)
+            .attr("r", @radius)
 
         nodeUpdate.select("text")
             .style("fill-opacity", 1)
@@ -185,13 +197,14 @@ class @Tree
 
         found
 
-    # apply a function f to each node
+    # apply a function f to each node in depth first order
     each: (f) =>
         each = (node) ->
             f node
             if node.children?
                 _.each node.children, (child) -> each child
         each @root
+        do @update
 
 
     # recursively search whole tree for node with name
@@ -238,9 +251,9 @@ class @Tree
         do @update
 
 class @BinaryTree extends Tree
-    constructor: (@divId, data, @prefix="TREE") ->
+    constructor: (@divId, data, options = {}) ->
         BinaryTree.assertValid data
-        super @divId, data
+        super @divId, data, options
 
     # validates whether data represents a valid binary tree
     # throws error if invalid
@@ -262,6 +275,11 @@ class @BinaryTree extends Tree
         node.children = [{name:null,parent:node,children:[]},{name:null,parent:node,children:[]}]
         do @update
 
+    remove: (node) =>
+        emptyNode = {name: null, parent:node.parent, children:[]}
+        index = node.parent.children.indexOf node
+        node.parent.children[index] = emptyNode
+        do @update
 
     # rotates the node (assumes binary tree) and redraws.
     # left or right depends on which side the child is on
