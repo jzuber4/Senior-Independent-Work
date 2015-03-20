@@ -1,0 +1,72 @@
+{% extends "trees/base.html" %}
+{% load staticfiles %}
+{% load compress %}
+
+{% block title %}Answer{% endblock %} 
+
+{% block js %}
+{{ block.super }}
+{% compress js %}
+<script type="text/coffeescript" charset="utf-8" src="{% static "trees/scripts/trees.coffee" %}"></script>
+<script type="text/coffeescript">
+$ -> 
+
+    width  = $("#treeContainer").width()
+    svg = d3.select("#treeContainer").append("svg")
+        .attr("width", width)
+        .attr("height", 100)
+    answerNode = svg.append("g")
+            .attr("class", "node answer")
+            .attr("transform", "translate(50,50)")
+    answerNode.append("circle")
+            .attr("r", 20)
+    answerNode.append("text")
+            .attr("x", 40)
+            .attr("y", 4)
+            .text("Answer")
+
+    userNode = svg.append("g")
+            .attr("class", "node selected")
+            .attr("transform", "translate(250,50)")
+    userNode.append("circle")
+            .attr("r", 20)
+    userNode.append("text")
+            .attr("x", 40)
+            .attr("y", 4)
+            .text("Your Answer")
+        
+
+
+    tree = new BinaryTree("treeContainer", {{structure|safe}})
+    answer = {{answer|safe}}
+    user_answer = {{user_answer|safe}}
+    tree.each (a) ->
+        if (user_answer.indexOf a.name) != -1
+            tree.select(a) 
+        if (answer.indexOf a.name) != -1
+            a.classes = ["answer"]
+
+</script>
+{% endcompress %}
+{% endblock %}
+
+{% block content %}
+<h2>{{ message }}</h2>
+<p>
+{% if success %}
+    Good job, your answer is correct!
+{% else %}
+    {% if error %}
+        Your answer "{{ user_answer }}" caused an error. 
+    {% else %}
+        Your answer is incorrect.
+    {% endif %}
+{% endif %}
+</p>
+<a class="btn btn-primary" href="{% url 'trees.views.question' %}">
+    Try new question?
+</a>
+<div id="treeContainer">
+</div>
+{% endblock %}
+
