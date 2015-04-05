@@ -1,7 +1,15 @@
 # make a BST Search question with data in the div specified by divId
 class @BSTSearchQuestion
     constructor: (divId, data, @onChange = (() -> )) ->
-        @tree = new BinaryTree(divId, data)
+        opts =
+            nodeClass: ((d) -> if d.name? then "clickable" else "")
+            radius: ((d) ->
+                if not d.children? or d.children.length == 0
+                    5
+                else
+                    20
+            )
+        @tree = new BinaryTree(divId, data, opts)
 
         # click function that allows user to select nodes (and fill input)
         @answer = []
@@ -65,8 +73,6 @@ class @BSTInsertQuestion
 
         # dimensions and setup for making display of numbers
         @width  = $("##{divId}").width()
-        @buttonSize = 100
-        @buttonMargin = 20
         @numsHeight = 90
         @largerRadius = 30
         @circleRadius = 20
@@ -86,7 +92,9 @@ class @BSTInsertQuestion
 
         # create tree
         treeData = {name: data[0], children: [{name: null, children: []}, {name: null, children: []}]}
-        @tree = new BinaryTree(divId, treeData)
+        opts =
+            nodeClass: ((d) -> if d.name? then "" else "clickable dashed")
+        @tree = new BinaryTree(divId, treeData, opts)
         @inserts = []
 
 
@@ -112,7 +120,12 @@ class @BSTInsertQuestion
         data.reverse()
         node = @svg.selectAll("g.node")
             .data(data)
-            .attr("class", "node")
+            .attr("class", (d, i) =>
+                if i != data.length - 1
+                    "node faded"
+                else
+                    "node"
+            )
 
         nodeEnter = node.enter().append("g")
                 .attr("transform", (d, i) =>
@@ -121,7 +134,12 @@ class @BSTInsertQuestion
                         xShift += @largerRadius + (data.length - 1 - i) * (2 * @circleRadius + @circleMargin)
                     "translate(#{xShift},#{@numsHeight / 2})"
                 )
-                .attr("class", "node")
+                .attr("class", (d, i) =>
+                    if i != data.length - 1
+                        "node faded"
+                    else
+                        "node"
+                )
 
         nodeEnter.append("circle")
                 .attr("r", (d, i) =>
@@ -132,9 +150,9 @@ class @BSTInsertQuestion
                 )
 
         nodeEnter.append("text")
-                .text((d) -> "#{d}")
-                .attr("y", 4)
-                .attr("text-anchor", "middle")
+                .text((d) -> d)
+                .attr("dy", ".35em")           # center the text vertically
+                .attr("text-anchor", "middle") # center it horizontally
 
         nodeUpdate = node.transition()
             .duration(@duration)

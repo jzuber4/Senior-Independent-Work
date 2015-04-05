@@ -1,11 +1,8 @@
-.node {
+.node.clickable {
     cursor: pointer;
 }
-.node.invalid {
-    cursor: default;
-}
 
-circle {
+.node circle {
     fill: #fff;
     stroke: steelblue;
     stroke-width: 2.5px;
@@ -28,9 +25,17 @@ text {
     fill: lightsteelblue;
 }
 
-.invalid circle {
+.dashed circle {
     stroke-dasharray: 3;
+}
+
+.leaf circle {
     stroke: grey;
+}
+
+.faded circle, .faded text {
+    fill-opacity: 0.5;
+    stroke-opacity: 0.5;
 }
 
 

@@ -10,12 +10,20 @@
 <script type="text/coffeescript" charset="utf-8" src="{% static "trees/scripts/trees.coffee" %}"></script>
 <script type="text/coffeescript">
 $ -> 
+    radius = (d) -> 
+        if not d.children? or d.children.length == 0
+            5 
+        else
+            20
+    opts =
+        radius: radius
     {% if success %}
-    tree = new BinaryTree("treeContainer", {{answer|safe}})
+    tree = new BinaryTree("treeContainer", {{answer|safe}}, opts)
     {% else %}
     {% if not error %}
-    answerTree = new BinaryTree("answerDiv", {{answer|safe}}, {yScale: 4})
-    userTree = new BinaryTree("userDiv", {{user_answer|safe}}, {yScale: 4})
+    opts.yScale = 4
+    answerTree = new BinaryTree("answerDiv", {{answer|safe}}, opts)
+    userTree = new BinaryTree("userDiv", {{user_answer|safe}}, opts)
     {% endif %}
     {% endif %}
 
@@ -40,7 +48,7 @@ $ ->
 {% if success %}
 <div id="treeContainer">
 </div>
-{% endif %}
+{% else %}
 {% if not error %}
 <div class="row">
     <div id="answerDiv" class="col-sm-6">
@@ -50,6 +58,7 @@ $ ->
         <h2>Your answer</h2>
     </div>
 </div>
+{% endif %}
 {% endif %}
 {% endblock %}
 

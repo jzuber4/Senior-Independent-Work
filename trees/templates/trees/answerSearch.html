@@ -37,14 +37,24 @@ $ ->
         
 
 
-    tree = new BinaryTree("treeContainer", {{structure|safe}})
     answer = {{answer|safe}}
     user_answer = {{user_answer|safe}}
+
+    opts =
+        nodeClass: ((d) -> if (answer.indexOf d.name) != -1 then "answer" else "")
+        radius: ((d) ->
+                if not d.children? or d.children.length == 0
+                    5 
+                else
+                    20
+            )
+    tree = new BinaryTree("treeContainer", {{structure|safe}}, opts)
+
+    selected = []
     tree.each (a) ->
         if (user_answer.indexOf a.name) != -1
-            tree.select(a) 
-        if (answer.indexOf a.name) != -1
-            a.classes = ["answer"]
+            selected.push a 
+    tree.selectArray selected
 
 </script>
 {% endcompress %}
