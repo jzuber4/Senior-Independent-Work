@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'bootstrap3',
     'compressor',
     # my app(s)
+    'quizzes',
     'questions',
 )
 
