@@ -1,4 +1,4 @@
-from quizzes.models import Question
+from quizzes.models import Quiz, Question, QuestionInstance
 from random import randint
 import json
 
@@ -67,48 +67,33 @@ def compare(a, b):
     else:
         return 1
 
+# make a quiz and 5 random questions, save all of it to the db and return
+def make_quiz():
+    quiz = Quiz(name="This is the name of the quiz", num_questions=5, status="in progress", max_score=50.0)
+    quiz.save()
+    for i in range(5):
+        q_type = random_question_type()
+        Question(q_type=q_type, quiz=quiz, idx=i).save()
+    return quiz
 
-def make_tree_question():
-    # only search questions so far
-    roll = randint(0,1)
+def random_question_type():
+    N = 2
+    roll = randint(0,N)
     if roll == 0:
-        return make_search_question()
+        return "search"
     else:
-        return make_insert_question()
+        return "insert"
 
-def make_insert_question():
-    # range of integers
-    lo = 0
-    hi = 100
-    # number of nodes
-    N = 10
+def make_tree_question(question, idx):
+    # only search questions so far
+    if question.q_type == "search":
+        return make_search_question(question, idx)
+    elif question.q_type == "insert":
+        return make_insert_question(question, idx)
+    else:
+        raise ValueError("question.q_type is invalid value: {}".format(question.q_type))
 
-    # make list of random integers and tree made from inserting them
-    first = randint(lo, hi)
-    sequence = [first]
-    root = BNode(first)
-    for _ in range(N - 1):
-        num = randint(lo,hi)
-        root.insert(num, compare)
-        sequence.append(num)
-
-    # make the prompt
-    prompt = "Starting from an empty BST, suppose that you insert the sequence of keys: {0}."
-    + " What is the level order traversal of the final tree? Click on blank nodes to insert"
-    + " keys at that node, or type in the level order traversal."
-    prompt = prompt.format(sequence)
-
-    # serialize to json
-    answer = json.dumps(root.to_serializable())
-    structure = json.dumps(sequence)
-
-    # create model
-    q_type = "search"
-    question = Question(q_type=q_type, prompt=prompt,
-                        structure=structure, answer=answer)
-    return question
-
-def make_insert_question():
+def make_insert_question(question, idx):
     # range of integers
     lo = 0
     hi = 100
@@ -132,23 +117,22 @@ def make_insert_question():
 
     answer = json.dumps(root.to_serializable())
     structure = json.dumps(numbers)
-    q_type = "insert"
 
     # create model
-    question = Question(q_type=q_type, prompt=prompt,
-                        structure=structure, answer=answer)
-    return question
+    instance = QuestionInstance(prompt=prompt,
+                                structure=structure, answer=answer,
+                                idx=idx, question=question)
+    return instance
 
 
-def make_search_question():
+def make_search_question(question, idx):
     # range of integers
     lo = 0
     hi = 100
     # number of nodes
     N = 20
 
-    # choose number to be searched for
-    choice = randint(lo, hi)
+    # choose number to be searched for choice = randint(lo, hi)
 
     # make the prompt
     prompt = "Given the following BST, suppose that you search for the key {0}. What is the sequence of keys in the BST that are compared to {0}?".format(choice)
@@ -172,10 +156,10 @@ def make_search_question():
     answer = json.dumps(c)
 
     # create model
-    q_type = "search"
-    question = Question(q_type=q_type, prompt=prompt,
-                        structure=structure, answer=answer)
-    return question
+    instance = QuestionInstance(prompt=prompt,
+                                structure=structure, answer=answer,
+                                idx=idx, question=question)
+    return instance
 
 
 

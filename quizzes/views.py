@@ -2,38 +2,59 @@ import json
 from django.core.urlresolvers import reverse
 from django.shortcuts import  get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
-from models import Question
-from helpers import make_tree_question
+from models import Quiz, Question, QuestionInstance
+from helpers import make_quiz, make_tree_question
 
 # Create your views here.
 # starting page
 @require_http_methods(['GET'])
-def index(request):
-    return render(request, 'quizzes/index.html')
+def quizzes(request):
+    # get quizzes for a user
+    # currently just gets all quizzes
+    quizzes = Quiz.objects.all()
+    # if I haven't made any quizzes yet
+    if len(quizzes) < 10:
+        quizzes = [make_quiz() for _ in range(10)]
+    d = {
+        'quizzes': quizzes,
+    }
+    return render(request, 'quizzes/quizzes.html', d)
+
+@require_http_methods(['GET'])
+def quiz(request, quizId):
+    # get that quiz
+    quiz = Quiz.objects.get(pk=quizId)
+    questions = Question.objects.filter(quiz__id=quiz.id)
+    questionInstances = QuestionInstance.objects.filter(question__id__in=[q.id for q in questions])
+    sortedInstances = [[]] * len(questions)
+    for qi in questionInstances:
+        sortedInstances[qi.question.pk].append(qi)
+
+    #for i in range(len(questions)):
+    #    sortedInstances[i] = sorted(sortedInstances[i], key=lamba x: x.idx)
+    d = {
+        'quiz': quiz,
+        'quizId': quizId,
+        'questions': questions,
+        'instances': sortedInstances,
+    }
+    return render (request, 'quizzes/quiz.html', d)
 
 # get questions and post answers
 @require_http_methods(['GET', 'POST'])
-def question(request, pk=None):
+def question(request, quizId, questionIdx, instanceIdx):
     if request.method == 'GET':
-        # GET - user is asking for a question
-        question = None
-
-        # get question or generate new question
-        if pk is None:
-            # make new question and add it to the database
-            question = make_tree_question()
-            question.save()
-            pk = question.pk
-            return redirect(reverse('quizzes.views.question', args=[pk]))
-        else:
-            # find from database, 404 if not present
-            question = get_object_or_404(Question, pk=pk)
+        quiz = Quiz.objects.get(pk=quizId)
+        question = Question.objects.filter(quiz__id=quiz.id, idx=questionIdx)
+        instance = QuestionInstance.objects.filter(question__id=question.id, idx=instanceIdx)
 
         d = {
-            'pk': pk,
+            'quizId': quizId,
+            'questionIdx': questionIdx,
+            'instanceIdx': instanceIdx,
             'type': question.q_type,
-            'prompt': question.prompt,
-            'structure': question.structure
+            'prompt': instance.prompt,
+            'structure': instance.structure
         }
 
         if question.q_type == "insert":

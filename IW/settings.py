@@ -88,6 +88,10 @@ USE_TZ = True
 STATIC_ROOT = ''
 # static files stored under /static/ for each app
 STATIC_URL = '/static/'
+# general static files
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, "static"),
+)
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
