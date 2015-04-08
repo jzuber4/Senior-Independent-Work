@@ -5,8 +5,8 @@
 {% block js %}
 {{ block.super }}
 {% compress js %}
-<script type="text/coffeescript" charset="utf-8" src="{% static "questions/scripts/trees.coffee" %}"></script>
-<script type="text/coffeescript" charset="utf-8" src="{% static "questions/scripts/questions.coffee" %}"></script>
+<script type="text/coffeescript" charset="utf-8" src="{% static "quizzes/scripts/trees.coffee" %}"></script>
+<script type="text/coffeescript" charset="utf-8" src="{% static "quizzes/scripts/questions.coffee" %}"></script>
 <script type="text/coffeescript">
 $ ->
     # clear preset value, question is likely new
@@ -33,7 +33,7 @@ $ ->
 {% block content %}
 <h1>Binary Search Trees</h1>
 <p>{{prompt}}</p>
-<form action="{% url 'questions.views.question' pk %}" method="post" class="form">
+<form action="{% url 'quizzes.views.question' pk %}" method="post" class="form">
     {% csrf_token %}
     <button type="button" id="insertUndoButton" class="btn btn-default disabled pull-left">
         Undo

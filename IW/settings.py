@@ -41,7 +41,6 @@ INSTALLED_APPS = (
     'compressor',
     # my app(s)
     'quizzes',
-    'questions',
 )
 
 MIDDLEWARE_CLASSES = (

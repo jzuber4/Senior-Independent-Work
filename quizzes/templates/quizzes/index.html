@@ -4,7 +4,7 @@
 {% block js %}
 {{ block.super }}
 {% compress js %}
-<script type="text/coffeescript" charset="utf-8" src="{% static "questions/scripts/trees.coffee" %}"></script>
+<script type="text/coffeescript" charset="utf-8" src="{% static "quizzes/scripts/trees.coffee" %}"></script>
 <script type="text/coffeescript" charset="utf-8">
 $ -> 
     tree = new Tree("treeContainer", {{ structure }})

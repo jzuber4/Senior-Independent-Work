@@ -1,4 +1,4 @@
-from questions.models import Question
+from quizzes.models import Question
 from random import randint
 import json
 
