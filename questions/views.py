@@ -9,7 +9,7 @@ from helpers import make_tree_question
 # starting page
 @require_http_methods(['GET'])
 def index(request):
-    return render(request, 'trees/index.html')
+    return render(request, 'questions/index.html')
 
 # get questions and post answers
 @require_http_methods(['GET', 'POST'])
@@ -24,7 +24,7 @@ def question(request, pk=None):
             question = make_tree_question()
             question.save()
             pk = question.pk
-            return redirect(reverse('trees.views.question', args=[pk]))
+            return redirect(reverse('questions.views.question', args=[pk]))
         else:
             # find from database, 404 if not present
             question = get_object_or_404(Question, pk=pk)
@@ -37,9 +37,9 @@ def question(request, pk=None):
         }
 
         if question.q_type == "insert":
-            return render(request, 'trees/questionInsert.html', d)
+            return render(request, 'questions/questionInsert.html', d)
         elif question.q_type == "search":
-            return render(request, 'trees/questionSearch.html', d)
+            return render(request, 'questions/questionSearch.html', d)
 
     else:
         # POST - user is answering question
@@ -69,9 +69,9 @@ def question(request, pk=None):
             d['success'] = False
 
         if question.q_type == "insert":
-            return render(request, 'trees/answerInsert.html', d)
+            return render(request, 'questions/answerInsert.html', d)
         elif question.q_type == "search":
-            return render(request, 'trees/answerSearch.html', d)
+            return render(request, 'questions/answerSearch.html', d)
 
 
 

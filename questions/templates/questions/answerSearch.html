@@ -1,4 +1,4 @@
-{% extends "trees/base.html" %}
+{% extends "base.html" %}
 {% load staticfiles %}
 {% load compress %}
 
@@ -7,7 +7,7 @@
 {% block js %}
 {{ block.super }}
 {% compress js %}
-<script type="text/coffeescript" charset="utf-8" src="{% static "trees/scripts/trees.coffee" %}"></script>
+<script type="text/coffeescript" charset="utf-8" src="{% static "questions/scripts/trees.coffee" %}"></script>
 <script type="text/coffeescript">
 $ -> 
 
@@ -73,7 +73,7 @@ $ ->
     {% endif %}
 {% endif %}
 </p>
-<a class="btn btn-primary" href="{% url 'trees.views.question' %}">
+<a class="btn btn-primary" href="{% url 'questions.views.question' %}">
     Try new question?
 </a>
 <div id="treeContainer">

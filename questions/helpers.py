@@ -1,4 +1,4 @@
-from trees.models import Question
+from questions.models import Question
 from random import randint
 import json
 

@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 
-from trees import views
+from questions import views
 
 urlpatterns = patterns('',
     url(r'^$', views.index),

@@ -40,7 +40,7 @@ INSTALLED_APPS = (
     'bootstrap3',
     'compressor',
     # my app(s)
-    'trees',
+    'questions',
 )
 
 MIDDLEWARE_CLASSES = (

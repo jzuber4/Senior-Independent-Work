@@ -3,6 +3,6 @@ from django.contrib import admin
 
 urlpatterns = patterns('',
     # Examples:
-    url(r'^trees/', include('trees.urls')),
+    url(r'^questions/', include('questions.urls')),
     url(r'^admin/', include(admin.site.urls)),
 )
