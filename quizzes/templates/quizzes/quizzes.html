@@ -3,26 +3,46 @@
 {% block title %}Quizzes{% endblock %} 
 
 {% block content %}
-<h1>This page contains all your quizzes</h1>
+<div class="container raised">
+    <div class="row">
+        <div class="col-sm-12">
+            <h1>Your Quizzes</h1>
+            <p>
+            {% if quizzes|length == 0 %}
+            You have no quizzes.
+            {% else %}
+            {% if quizzes|length == 1 %}
+            You have 1 quiz.
+            {% else %}
+            You have {{quizzes|length}} quizzes.
+            {% endif %}
+            {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
 {% if quizzes|length != 0 %}
 {# if there are quizzes, display info about them all #}
 {% for quiz in quizzes %}
-<h2><a href="{% url quizzes.views.quiz quizId %}">{{ quiz.name }}</a></h2>
-<p>The quiz is currently {{ quiz.status }}.</p>
-{% if quiz.num_questions > 1 %}
-<p>You have answered {{ quiz.num_answered }} out of {{ quiz.num_questions }} questions</p>
-{% else %}
-{% if quiz.num_answered == 1 %}
-<p>You have answered the question.</p>
-{% else %}
-<p>You have not yet answered the question.</p>
-{% endif %}
-{% endif %}
-<p>You have {{ quiz.score }} out of {{ quiz.max_score }} points.</p>
+<div class="container raised">
+    <div class="row">
+        <div class="col-sm-12">
+            <h2><a href="{% url 'quizzes.views.quiz' quiz.id %}">{{ quiz.name }}</a></h2>
+            <p>The quiz is currently {{ quiz.status }}.</p>
+            {% if quiz.num_questions > 1 %}
+            <p>You have answered {{ quiz.num_answered }} out of {{ quiz.num_questions }} questions</p>
+            {% else %}
+            {% if quiz.num_answered == 1 %}
+            <p>You have answered the question.</p>
+            {% else %}
+            <p>You have not yet answered the question.</p>
+            {% endif %}
+            {% endif %}
+            <p>You have {{ quiz.score }} out of {{ quiz.max_score }} points.</p>
+        </div>
+    </div>
+</div>
 {% endfor %}
-{% else %}
-{# No quizzes #}
-<h2>It appears that you don't have any quizzes.</h2>
 {% endif %}
 {% endblock %}
 

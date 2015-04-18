@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load quiz_extras %}
+
+{% block title %}Quiz {{ quiz_id }}{% endblock %} 
+
+{% block content %}
+<div class="container raised">
+    <div class="row">
+        <div class="col-sm-12"> <h2>{{ quiz.name }}</h2>
+            <p>The quiz is currently {{ quiz.status }}.</p>
+            {% if quiz.num_questions > 1 %}
+            <p>You have answered {{ quiz.num_answered }} out of {{ quiz.num_questions }} questions</p>
+            {% else %}
+            {% if quiz.num_answered == 1 %}
+            <p>You have answered the question.</p>
+            {% else %}
+            <p>You have not yet answered the question.</p>
+            {% endif %}
+            {% endif %}
+            <p>You have {{ quiz.score }} out of {{ quiz.max_score }} points.</p>
+            </p>
+        </div>
+    </div>
+</div>
+{# if there are quizzes, display info about them all #}
+    <div class="container raised">
+        <div class="row">
+            <div class="col-sm-12">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Question</th>
+                            <th>Question Type</th>
+                            <th>Score</th>
+                            <th>Max Score</th>
+                            <th>Attempts Left</th>
+                            <th>Attempt Question</th>
+                            <th>Previous Attempts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for question, instances in questions_and_instances %}
+                        <tr>
+                            <td>{{question.idx}}</td>
+                            <td>{{ question.q_type }}</td>
+                            <td>{{ question.score }}</td>
+                            <td>{{ question.max_score }}</td>
+                            <td>{{ question.max_attempts|subtract:question.attempts }}</td>
+                            <td>
+                                {% if question.in_progress %}
+                                <a href="{% url 'quizzes.views.question' quiz.id question.idx question.attempts|add:"-1" %}"
+                                    class="btn btn-primary">
+                                    Go To Current Attempt
+                                </a>
+                                {% else %}
+                                {% if question.attempts == question.max_attempts %}
+                                <button class="btn btn-primary disabled">
+                                    No Attempts Remaining
+                                </button>
+                                {% else %}
+                                <a href="{% url 'quizzes.views.question' quiz.id question.idx question.attempts %}"
+                                    class="btn btn-primary">
+                                    {% if question.attempts == 0 %}
+                                    Attempt Question
+                                    {% else %}
+                                    Try Again
+                                    {% endif %}
+                                </a>
+                                {% endif %}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if instances|length != 0 %}
+                                <div class="dropdown">
+                                    <button id="dLabel{{question.idx}}" type="button" data-toggle="dropdown" 
+                                        aria-haspopup="true" aria-expanded="false" 
+                                        class="btn btn-default">
+                                        {% if instances|length != 1 %}
+                                            {{ instances|length }} Previous Attempts 
+                                        {% else %}
+                                            1 Previous Attempt    
+                                        {% endif %}
+                                        <span class="caret"></span>
+                                    </button>
+                                    {% if instances|length != 0 %}
+                                    <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel{{question.idx}}">
+                                        {% for instance in instances %}
+                                        <li role="presentation">
+                                        <a role="menuitem" tabindex="-1" href="{% url "quizzes.views.question" quiz.id question.idx instance.idx %}">
+                                        {{instance.idx}}: score: {{instance.score}}
+                                        </a>
+                                        </li> 
+                                        {% endfor %}
+                                    </ul>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <button type="button" class="btn btn-default disabled">No Previous Attempts</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+

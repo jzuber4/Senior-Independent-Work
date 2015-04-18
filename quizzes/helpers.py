@@ -1,6 +1,8 @@
+import datetime
+import json
+from django.utils import timezone
 from quizzes.models import Quiz, Question, QuestionInstance
 from random import randint
-import json
 
 # binary tree
 class BNode:
@@ -119,9 +121,11 @@ def make_insert_question(question, idx):
     structure = json.dumps(numbers)
 
     # create model
-    instance = QuestionInstance(prompt=prompt,
+    end_time = timezone.now() + datetime.timedelta(hours=1)
+    instance = QuestionInstance(prompt=prompt, end_time=end_time,
                                 structure=structure, answer=answer,
                                 idx=idx, question=question)
+    instance.save()
     return instance
 
 
@@ -132,7 +136,8 @@ def make_search_question(question, idx):
     # number of nodes
     N = 20
 
-    # choose number to be searched for choice = randint(lo, hi)
+    # choose number to be searched for
+    choice = randint(lo, hi)
 
     # make the prompt
     prompt = "Given the following BST, suppose that you search for the key {0}. What is the sequence of keys in the BST that are compared to {0}?".format(choice)
@@ -156,9 +161,11 @@ def make_search_question(question, idx):
     answer = json.dumps(c)
 
     # create model
-    instance = QuestionInstance(prompt=prompt,
+    end_time = timezone.now() + datetime.timedelta(hours=1)
+    instance = QuestionInstance(prompt=prompt, end_time=end_time,
                                 structure=structure, answer=answer,
                                 idx=idx, question=question)
+    instance.save()
     return instance
 
 

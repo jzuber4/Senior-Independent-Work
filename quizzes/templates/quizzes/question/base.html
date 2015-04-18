@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load compress %}
+
+{% block title %}Question{% endblock %} 
+
+{% block js %}
+{{ block.super }}
+{% compress js %}
+<script type="text/coffeescript" charset="utf-8" src="{% static "quizzes/scripts/trees.coffee" %}"></script>
+<script type="text/coffeescript" charset="utf-8" src="{% static "quizzes/scripts/questions.coffee" %}"></script>
+{% endcompress %}
+{% endblock %}
+
+{% block content %}
+<div class="container raised">
+    <div class="row">
+        <div class="col-sm-12">
+            {% block qcontent %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

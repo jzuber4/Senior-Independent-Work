@@ -1,0 +1,43 @@
+{% extends "quizzes/answer/base.html" %}
+{% load compress %}
+
+{% block js %}
+{{ block.super }}
+{% compress js %}
+<script type="text/coffeescript">
+$ -> 
+    radius = (d) -> 
+        if not d.children? or d.children.length == 0
+            5 
+        else
+            20
+    opts =
+        radius: radius
+    {% if instance.correct or instance.correct == None %}
+    tree = new BinaryTree("treeContainer", {{instance.answer|safe}}, opts)
+    {% else %}
+    opts.yScale = 4
+    answerTree = new BinaryTree("answerDiv", {{instance.answer|safe}}, opts)
+    userTree = new BinaryTree("userDiv", {{instance.user_answer|safe}}, opts)
+    {% endif %}
+
+</script>
+{% endcompress %}
+{% endblock %}
+
+{% block acontent %}
+{% if instance.correct or instance == None %}
+<div id="treeContainer">
+</div>
+{% else %}
+<div class="row">
+    <div id="answerDiv" class="col-sm-6">
+        <h2>The answer</h2>
+    </div>
+    <div id="userDiv" class="col-sm-6">
+        <h2>Your answer</h2>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+

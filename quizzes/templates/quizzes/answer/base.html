@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load compress %}
+
+{% block title %}Answer{% endblock %} 
+
+{% block js %}
+{{ block.super }}
+{% compress js %}
+<script type="text/coffeescript" charset="utf-8" src="{% static "quizzes/scripts/trees.coffee" %}"></script>
+{% endcompress %}
+{% endblock %}
+
+{% block content %}
+<div class="container raised">
+    <div class="row">
+        <div class="col-sm-12">
+            <h4>
+                {% if instance.correct %}
+                Correct!
+                {% else %}
+                {% if instance.correct != None %}
+                Sorry, that was incorrect.
+                {% else %}
+                It seems like you didn't answer in time.
+                {% endif %}
+                {% endif %}
+            </h4>
+            <h4>You got {{instance.score}} out of {{question.max_score}} points</h4>
+
+            <a href="{% url 'quizzes.views.quiz' quiz.id %}#question{{question.idx}}"
+                class="btn btn-success">
+                    Go Back To Quiz
+            </a>
+
+            {% if question.in_progress %}
+            <a href="{% url 'quizzes.views.question' quiz.id question.idx question.attempts|add:"-1" %}"
+                class="btn btn-primary">
+                Go To Current Attempt     
+            </a>
+            {% else %}
+            {% if question.attempts != question.max_attempts %}
+            <a href="{% url 'quizzes.views.question' quiz.id question.idx question.attempts %}"
+                class="btn btn-primary">
+                Try Again? 
+            </a>
+            {% endif %}
+            {% endif %}
+
+            {% block acontent %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

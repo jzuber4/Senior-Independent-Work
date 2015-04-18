@@ -1,16 +1,13 @@
-{% extends "base.html" %}
-{% load staticfiles %}
+{% extends "quizzes/question/base.html" %}
 {% load compress %} 
 
 {% block js %}
 {{ block.super }}
 {% compress js %}
-<script type="text/coffeescript" charset="utf-8" src="{% static "quizzes/scripts/trees.coffee" %}"></script>
-<script type="text/coffeescript" charset="utf-8" src="{% static "quizzes/scripts/questions.coffee" %}"></script>
 <script type="text/coffeescript">
 $ ->
     # clear preset value, question is likely new
-    question = new BSTSearchQuestion("treeContainer", {{structure|safe}}) 
+    question = new BSTSearchQuestion("treeContainer", {{instance.structure|safe}}) 
     # update input when question is changed 
     f = () ->
         answers = question.submit().join ", "
@@ -29,13 +26,11 @@ $ ->
 {% endcompress %}
 {% endblock %}
 
-{% block title %}Question{% endblock %} 
-
-{% block content %}
+{% block qcontent %}
 <h1>Binary Search Trees</h1>
-<p>{{prompt}}</p>
+<p>{{instance.prompt}}</p>
 <p>Click to select nodes, or type in a comma separated series of keys.</p>
-<form action="{% url 'quizzes.views.question' pk %}" method="post" class="form">
+<form action="{% url 'quizzes.views.question' quiz.id question.idx instance.idx %}" method="post" class="form">
     {% csrf_token %}
     <div class="form-group">
         <input name="answer" type="text" class="form-control" id="inputHuman" placeholder="Answer">
