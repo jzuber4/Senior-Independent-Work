@@ -4,8 +4,9 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import  get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
-from models import Quiz, Question, QuestionInstance
 from helpers import make_quiz, make_tree_question
+from models import Quiz, Question, QuestionInstance
+from suds.client import Client
 
 # Create your views here.
 # starting page
@@ -41,12 +42,53 @@ def quiz(request, quiz_id):
     }
     return render (request, 'quizzes/quiz.html', d)
 
+@require_http_methods(['GET', 'POST'])
+def question_test(request, quiz_id, question_idx):
+    BST_INSERT = 1
+    BST_SEARCH = 2
+    quiz_id = int(quiz_id)
+    question_idx = int(question_idx)
+    client = Client('http://10.8.241.134:8080/Initial/services/Main?wsdl')
+    if request.method == 'GET':
+        question = json.loads(client.service.getExercise('vi', quiz_id, question_idx, 0))
+        prompt = json.loads(question['prompt'])
+        d = {
+            'prompt': prompt['text'],
+            'structure': prompt['json'],
+        }
+        if question["referenceNum"] == 1:
+            return render(request, 'quizzes/question/insert_test.html', d)
+        elif question["referenceNum"] == 2:
+            return render(request, 'quizzes/question/search_test.html', d)
+        else:
+            HttpResponse(400, "sorry!")
+    if request.method == 'POST':
+        user_answer = " ".join(json.loads(request.POST.get('answer')))
+        result = json.loads(client.service.getResult('vi', quiz_id, question_idx, user_answer))
+        d = {
+            'answer': json.dumps(result['answer'].split()),
+            'user_answer': json.dumps(user_answer.split()),
+            'score': result['score'],
+            'max_score': result['maxScore'],
+            'correct': result['score'] == result['maxScore'],
+            'structure': json.loads(result['prompt'])['json'],
+        }
+        if result["referenceNum"] == 1:
+            return render(request, 'quizzes/answer/insert_test.html', d)
+        elif result["referenceNum"] == 2:
+            return render(request, 'quizzes/answer/search_test.html', d)
+        else:
+            HttpResponse(400, "sorry!")
+
+
+
 # get questions and post answers
 @require_http_methods(['GET', 'POST'])
 def question(request, quiz_id, question_idx, instance_idx):
     quiz_id = int(quiz_id)
     question_idx = int(question_idx)
     instance_idx = int(instance_idx)
+
     quiz = get_object_or_404(Quiz, pk=quiz_id)
 
     question_queryset = Question.objects.filter(quiz__id=quiz.id, idx=question_idx)

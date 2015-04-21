@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+{% load compress %}
+
+{% block title %}Answer{% endblock %} 
+
+{% block js %}
+{{ block.super }}
+{% compress js %}
+<script type="text/coffeescript" charset="utf-8" src="{% static "quizzes/scripts/trees.coffee" %}"></script>
+{% endcompress %}
+{% endblock %}
+
+{% block content %}
+<div class="container raised">
+    <div class="row">
+        <div class="col-sm-12">
+            <h4>
+                {% if correct %}
+                Correct!
+                {% else %}
+                {% if correct != None %}
+                Sorry, that was incorrect.
+                {% else %}
+                It seems like you didn't answer in time.
+                {% endif %}
+                {% endif %}
+            </h4>
+            <h4>You got {{score}} out of {{max_score}} points</h4>
+            {% block acontent %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
