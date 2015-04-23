@@ -1,0 +1,20 @@
+{% extends "quizzes/question/base.html" %}
+
+{% block qcontent %}
+<form method="post" class="form">
+    {% csrf_token %}
+    {% for answer in answers %}
+    <div class="checkbox">
+        <label>
+            <input type="checkbox" name="answer" id="options{{forloop.counter0}}" value="{{forloop.counter0}}">
+            {{answer}}
+        </label>
+    </div>
+    {% endfor %}
+    <input name="question_type" type="hidden" value="{{question_type}}">
+    <button type="submit" class="btn btn-primary">
+        Submit
+    </button>
+</form>
+{% endblock %}
+

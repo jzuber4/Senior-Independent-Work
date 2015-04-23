@@ -20,23 +20,22 @@ $ ->
             $("#inputHuman").val("")
 
     $("form").submit () -> 
-        $("#inputAnswer").val(JSON.stringify(question.submit()))
+        $("#inputAnswer").val(JSON.stringify(question.submit().join " "))
        
 </script>
 {% endcompress %}
 {% endblock %}
 
 {% block qcontent %}
-<h1>Binary Search Trees</h1>
-<p>{{prompt}}</p>
 <p>Click to select nodes, or type in a comma separated series of keys.</p>
-<form {#action="{% url 'quizzes.views.question' quiz.id question.idx instance.idx %}"#} method="post" class="form">
+<form method="post" class="form" autocomplete="off">
     {% csrf_token %}
     <div class="form-group">
-        <input name="answer" type="text" class="form-control" id="inputHuman" placeholder="Answer">
+        <input name="answer" type="text" class="form-control" id="inputHuman" placeholder="Answer" autocomplete="off">
     </div>
     <input name="answer" type="hidden" id="inputAnswer">
-    <button type="submit" class="btn btn-primary pull-right">
+    <input name="question_type" type="hidden" value="{{question_type}}">
+    <button type="submit" class="btn btn-primary">
         Submit
     </button>
 </form>

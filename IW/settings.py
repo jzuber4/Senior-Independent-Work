@@ -41,6 +41,7 @@ INSTALLED_APPS = (
     'compressor',
     # my app(s)
     'quizzes',
+    'quiz_service',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -51,6 +52,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # CAS
+    'cas.middleware.CASMiddleware',
 )
 
 ROOT_URLCONF = 'IW.urls'
@@ -79,6 +82,20 @@ USE_I18N = True
 
 USE_L10N = True
 USE_TZ = True
+
+# CAS
+CAS_SERVER_URL = "https://fed.princeton.edu/cas/"
+# Auth / CAS
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'cas.backends.CASBackend',
+)
+CAS_RESPONSE_CALLBACKS = (
+    'IW.cas.callback',
+)
+
+# soap url for quiz service
+QUIZ_SERVICE_URL = 'http://10.8.241.134:8080/Initial/services/Main?wsdl'
 
 
 # Static files (CSS, JavaScript, Images)

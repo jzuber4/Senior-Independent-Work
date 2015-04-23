@@ -1,0 +1,15 @@
+{% extends "quizzes/question/base.html" %}
+
+{% block qcontent %}
+<form method="post" class="form" autocomplete="off">
+    {% csrf_token %}
+    <div class="form-group">
+        <input name="answer" type="text" class="form-control" placeholder="Answer" autocomplete="off">
+    </div>
+    <input name="question_type" type="hidden" value="{{question_type}}">
+    <button type="submit" class="btn btn-primary">
+        Submit
+    </button>
+</form>
+{% endblock %}
+

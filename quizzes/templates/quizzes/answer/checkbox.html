@@ -1,0 +1,46 @@
+{% extends "quizzes/answer/base_test.html" %}
+{% block acontent %}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-6">
+            <h4>Your Answer</h4>
+            <form class="form">
+                {% for a in answers %}
+                <div class="checkbox">
+                    <label>
+                        {% if forloop.counter0 in user_answer %}
+                        <input type="checkbox" name="answer" id="options{{forloop.counter0}}" 
+                        value="{{forloop.counter0}}" checked="checked" disabled>
+                        {% else %}
+                        <input type="checkbox" name="answer" id="options{{forloop.counter0}}" 
+                        value="{{forloop.counter0}}" disabled>
+                        {% endif %}
+                        {{a}}
+                    </label>
+                </div>                 
+                {% endfor %}
+            </form>
+        </div>
+        <div class="col-sm-6">
+            <h4>Correct Answer</h4>
+            <form class="form">
+                {% for a in answers %}
+                <div class="checkbox">
+                    <label>
+                        {% if forloop.counter0 in answer %}
+                        <input type="checkbox" name="answer" id="options{{forloop.counter0}}" 
+                        value="{{forloop.counter0}}" checked="checked" disabled>
+                        {% else %}
+                        <input type="checkbox" name="answer" id="options{{forloop.counter0}}" 
+                        value="{{forloop.counter0}}" disabled>
+                        {% endif %}
+                        {{a}}
+                    </label>
+                </div>                 
+                {% endfor %}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

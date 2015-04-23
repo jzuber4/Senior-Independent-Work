@@ -27,18 +27,14 @@
 <div class="container raised">
     <div class="row">
         <div class="col-sm-12">
-            <h2><a href="{% url 'quizzes.views.quiz' quiz.id %}">{{ quiz.name }}</a></h2>
-            <p>The quiz is currently {{ quiz.status }}.</p>
-            {% if quiz.num_questions > 1 %}
-            <p>You have answered {{ quiz.num_answered }} out of {{ quiz.num_questions }} questions</p>
+            <h2><a href="{% url 'quizzes.views.quiz' quiz.quizId %}">{{ quiz.quizTitle }}</a></h2>
+            {% if quiz.numQuestions == 1 %}
+            <p>1 Question</p>
             {% else %}
-            {% if quiz.num_answered == 1 %}
-            <p>You have answered the question.</p>
-            {% else %}
-            <p>You have not yet answered the question.</p>
+            <p>{{quiz.numQuestions}} questions</p>
             {% endif %}
-            {% endif %}
-            <p>You have {{ quiz.score }} out of {{ quiz.max_score }} points.</p>
+            <p>Quiz Starts: {{quiz.startDate}}</p>
+            <p>Quiz Ends: {{quiz.endDate}}</p>
         </div>
     </div>
 </div>

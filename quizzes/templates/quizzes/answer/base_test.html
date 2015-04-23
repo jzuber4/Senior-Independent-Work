@@ -15,6 +15,7 @@
 <div class="container raised">
     <div class="row">
         <div class="col-sm-12">
+            <h1>{{title}}</hi>
             <h4>
                 {% if correct %}
                 Correct!
@@ -27,6 +28,10 @@
                 {% endif %}
             </h4>
             <h4>You got {{score}} out of {{max_score}} points</h4>
+            {% if explanation %}
+            <pre>{{explanation}}</pre>
+            {% endif %}
+            <p>Seed: {{seed}}<p>
             {% block acontent %}
             {% endblock %}
         </div>

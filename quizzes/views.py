@@ -1,31 +1,27 @@
 import json
-from django.core.urlresolvers import reverse
+from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponse
 from django.shortcuts import  get_object_or_404, redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_http_methods
 from helpers import make_quiz, make_tree_question
 from models import Quiz, Question, QuestionInstance
-from suds.client import Client
+from quiz_service.service import get_quizzes, get_exercise, get_result, get_question_type, QType
+from time import strptime
 
 # Create your views here.
 # starting page
-@require_http_methods(['GET'])
+@login_required
 def quizzes(request):
-    # get quizzes for a user
-    # currently just gets all quizzes
-    quizzes = Quiz.objects.all()
-    # if I haven't made any quizzes yet
-    if len(quizzes) < 10:
-        quizzes = [make_quiz() for _ in range(10)]
+    # get all quizzes, will potentially modify to get quizzes for a user
     d = {
-        'quizzes': quizzes,
+        'quizzes': get_quizzes(),
     }
     return render(request, 'quizzes/quizzes.html', d)
 
-@require_http_methods(['GET'])
+@login_required
 def quiz(request, quiz_id):
     # get that quiz
+    # NOTE: THIS IS CURRENTLY NOT FUNCTIONAL, NEED QUIZ SERVICE TO SUPPORT GETTING QUESTIONS OF QUIZ
     quiz_id = int(quiz_id)
     quiz = get_object_or_404(Quiz, pk=quiz_id)
     questions = Question.objects.filter(quiz__id=quiz.id)
@@ -42,48 +38,100 @@ def quiz(request, quiz_id):
     }
     return render (request, 'quizzes/quiz.html', d)
 
-@require_http_methods(['GET', 'POST'])
+@login_required
 def question_test(request, quiz_id, question_idx):
-    BST_INSERT = 1
-    BST_SEARCH = 2
     quiz_id = int(quiz_id)
     question_idx = int(question_idx)
-    client = Client('http://10.8.241.134:8080/Initial/services/Main?wsdl')
+    # connect to SOAP service
     if request.method == 'GET':
-        question = json.loads(client.service.getExercise('vi', quiz_id, question_idx, 0))
-        prompt = json.loads(question['prompt'])
+        # get the question and its type
+        question = get_exercise('vi', quiz_id, question_idx, 1)
+        question_type = get_question_type(question)
+
+        # parse the question
+        # set up context for template
         d = {
-            'prompt': prompt['text'],
-            'structure': prompt['json'],
+            'question_type': question_type,
+            'prompt':        question['prompt'],
+            'seed':          question['seed'],
+            'title':         question['title'],
         }
-        if question["referenceNum"] == 1:
+        if question_type == QType.BST_INSERT or question_type == QType.BST_SEARCH and not question['isText']:
+            d['prompt'] = json.loads(question['prompt'])['text']
+            d['structure'] = json.loads(question['prompt'])['json']
+        elif question_type == QType.CHECKBOX or question_type == QType.RADIO:
+            d['answers'] = question['answers']
+
+        # render the appropriate template
+        if question_type == QType.BST_INSERT:
             return render(request, 'quizzes/question/insert_test.html', d)
-        elif question["referenceNum"] == 2:
+        elif question_type == QType.BST_SEARCH:
             return render(request, 'quizzes/question/search_test.html', d)
+        elif question_type == QType.SHORT_ANSWER:
+            return render(request, 'quizzes/question/short_answer.html', d)
+        elif question_type == QType.RADIO:
+            return render(request, 'quizzes/question/radio.html', d)
+        elif question_type == QType.CHECKBOX:
+            return render(request, 'quizzes/question/checkbox.html', d)
         else:
-            HttpResponse(400, "sorry!")
+            HttpResponse(400, 'sorry!')
+
     if request.method == 'POST':
-        user_answer = " ".join(json.loads(request.POST.get('answer')))
+        # get the type of the question
+        question_type = request.POST.get('question_type')
+
+        # read in the answer
+        user_answer = request.POST.get('answer')
+        if question_type == QType.BST_INSERT or question_type == QType.BST_SEARCH:
+            user_answer = json.loads(user_answer)
+        elif question_type == QType.CHECKBOX:
+            user_answer = " ".join(request.POST.getlist('answer'))
+
+        # submit the answer and get the result
         result = json.loads(client.service.getResult('vi', quiz_id, question_idx, user_answer))
+        print(result)
+
+        # parse the result
+        # set up context for template
         d = {
-            'answer': json.dumps(result['answer'].split()),
-            'user_answer': json.dumps(user_answer.split()),
-            'score': result['score'],
-            'max_score': result['maxScore'],
-            'correct': result['score'] == result['maxScore'],
-            'structure': json.loads(result['prompt'])['json'],
+            'user_answer': user_answer,
+            'correct':     result['score'] == result['maxScore'],
+            'answer':      result['answer'],
+            'explanation': result['explanation'],
+            'max_score':   result['maxScore'],
+            'score':       result['score'],
+            'seed':        result['seed'],
+            'title':       result['title'],
         }
-        if result["referenceNum"] == 1:
+        if question_type == QType.BST_INSERT or question_type == QType.BST_SEARCH and result['isText']:
+            d['structure'] = json.loads(result['prompt'])['json']
+        elif question_type == QType.RADIO:
+            d['answers']     = result['answers']
+            d['answer']      = int(result['answer'])
+            d['user_answer'] = int(user_answer)
+        elif question_type == QType.CHECKBOX:
+            d['answers']     = result['answers']
+            d['answer']      = [int(a) for a in result['answer'].split()]
+            d['user_answer'] = [int(a) for a in user_answer.split()]
+
+        # render the appropriate template
+        if question_type == QType.BST_INSERT:
             return render(request, 'quizzes/answer/insert_test.html', d)
-        elif result["referenceNum"] == 2:
+        elif question_type == QType.BST_SEARCH:
             return render(request, 'quizzes/answer/search_test.html', d)
+        elif question_type == QType.SHORT_ANSWER:
+            return render(request, 'quizzes/answer/short_answer.html', d)
+        elif question_type == QType.RADIO:
+            return render(request, 'quizzes/answer/radio.html', d)
+        elif question_type == QType.CHECKBOX:
+            return render(request, 'quizzes/answer/checkbox.html', d)
         else:
-            HttpResponse(400, "sorry!")
+            HttpResponse(400, 'sorry!')
 
 
 
 # get questions and post answers
-@require_http_methods(['GET', 'POST'])
+@login_required
 def question(request, quiz_id, question_idx, instance_idx):
     quiz_id = int(quiz_id)
     question_idx = int(question_idx)
@@ -94,7 +142,7 @@ def question(request, quiz_id, question_idx, instance_idx):
     question_queryset = Question.objects.filter(quiz__id=quiz.id, idx=question_idx)
     question = instance = None
     if len(question_queryset) == 0:
-        raise Http404("Question not found")
+        raise Http404('Question not found')
     else:
         question = question_queryset[0]
 
@@ -107,7 +155,6 @@ def question(request, quiz_id, question_idx, instance_idx):
             question.in_progress = True
             question.save()
         elif instance_idx > question.attempts:
-            print instance_idx, question.attempts
             return HttpResponse(400) # bad operation
         else:
             instance = instance_queryset[0]
@@ -118,12 +165,12 @@ def question(request, quiz_id, question_idx, instance_idx):
             'instance': instance,
         }
 
-        if question.q_type == "insert":
+        if question.q_type == 'insert':
             if instance.complete or timezone.now() > instance.end_time:
                 return render(request, 'quizzes/answer/insert.html', d)
             else:
                 return render(request, 'quizzes/question/insert.html', d)
-        elif question.q_type == "search":
+        elif question.q_type == 'search':
             if instance.complete or timezone.now() > instance.end_time:
                 return render(request, 'quizzes/answer/search.html', d)
             else:
@@ -131,7 +178,7 @@ def question(request, quiz_id, question_idx, instance_idx):
 
     else:
         if len(instance_queryset) == 0:
-            raise Http404("QuestionInstance not found.")
+            raise Http404('QuestionInstance not found.')
         else:
             instance = instance_queryset[0]
 
@@ -140,14 +187,13 @@ def question(request, quiz_id, question_idx, instance_idx):
             # POST - user is answering question
             user_answer = request.POST.get('answer')
             if user_answer != [] and not user_answer:
-                user_answer = json.dumps("")
+                user_answer = json.dumps('')
             user_answer = json.loads(user_answer)
             # deserialize answer
             answer = json.loads(instance.answer)
 
             # check correctness, assign complete, assign score
             instance.user_answer = json.dumps(user_answer)
-            print instance.user_answer
             instance.complete = True
             instance.correct = user_answer == answer
             # simple scoring function now
@@ -178,9 +224,9 @@ def question(request, quiz_id, question_idx, instance_idx):
             'instance': instance,
         }
 
-        if question.q_type == "insert":
+        if question.q_type == 'insert':
             return render(request, 'quizzes/answer/insert.html', d)
-        elif question.q_type == "search":
+        elif question.q_type == 'search':
             return render(request, 'quizzes/answer/search.html', d)
 
 

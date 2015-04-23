@@ -31,8 +31,8 @@ $ ->
             .attr("y", 4)
             .text("Your Answer")
 
-    answer = {{answer|safe}}
-    user_answer = {{user_answer|safe}}
+    answer = "{{answer|safe}}".split " "
+    user_answer = "{{user_answer|safe}}".split " "
 
     opts =
         nodeClass: ((d) -> if (answer.indexOf d.name) != -1 then "answer" else "") 
