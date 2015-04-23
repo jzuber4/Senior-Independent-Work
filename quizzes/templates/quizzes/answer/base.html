@@ -15,38 +15,37 @@
 <div class="container raised">
     <div class="row">
         <div class="col-sm-12">
+            <h3>{{title}}</h3>
             <h4>
-                {% if instance.correct %}
+                {% if correct %}
                 Correct!
                 {% else %}
-                {% if instance.correct != None %}
                 Sorry, that was incorrect.
-                {% else %}
-                It seems like you didn't answer in time.
-                {% endif %}
                 {% endif %}
             </h4>
-            <h4>You got {{instance.score}} out of {{question.max_score}} points</h4>
-
-            <a href="{% url 'quizzes.views.quiz' quiz.id %}#question{{question.idx}}"
+            <h4>You got {{score}} out of {{max_score}} points</h4>
+            <a href="{% url 'quizzes.views.quiz' quiz_id %}"
                 class="btn btn-success">
                     Go Back To Quiz
             </a>
-
-            {% if question.in_progress %}
-            <a href="{% url 'quizzes.views.question' quiz.id question.idx question.attempts|add:"-1" %}"
-                class="btn btn-primary">
-                Go To Current Attempt     
-            </a>
-            {% else %}
-            {% if question.attempts != question.max_attempts %}
-            <a href="{% url 'quizzes.views.question' quiz.id question.idx question.attempts %}"
+            <a href="{% url 'quizzes.views.question_test' quiz_id question_idx %}"
                 class="btn btn-primary">
                 Try Again? 
             </a>
+            <hr/>
+            <p> Prompt: </p>
+            {% block prompt %}
+            <pre>{{ prompt }}</pre>
+            {% endblock %}
+            {% if explanation %}
+            <p> Explanation: </p>
             {% endif %}
+            {% block explanation %}
+            {% if explanation %}
+            <pre>{{explanation}}</pre>
             {% endif %}
-
+            {% endblock %}
+            <p>Seed: {{seed}}<p>
             {% block acontent %}
             {% endblock %}
         </div>

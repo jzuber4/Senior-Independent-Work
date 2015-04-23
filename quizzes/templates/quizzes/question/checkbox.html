@@ -1,7 +1,7 @@
 {% extends "quizzes/question/base.html" %}
 
 {% block qcontent %}
-<form method="post" class="form">
+<form method="post" class="form" autocomplete="off">
     {% csrf_token %}
     {% for statement in statements %}
     <div class="checkbox">

@@ -7,7 +7,7 @@
 <script type="text/coffeescript">
 $ ->
     # clear preset value, question is likely new
-    question = new BSTInsertQuestion("treeContainer", {{instance.structure|safe}})
+    question = new BSTInsertQuestion("treeContainer", {{structure|safe}})
     question.onChange(() ->
         if question.canUndo()
             $("#insertUndoButton").removeClass("disabled")
@@ -25,14 +25,17 @@ $ ->
 {% endcompress %}
 {% endblock %}
 
+{% block prompt %}
+<pre>Insert the following keys into the tree by clicking on the empty nodes.</pre>
+{% endblock %}
+
 {% block qcontent %}
-<h1>Binary Search Trees</h1>
-<p>{{instance.prompt}}</p>
-<form action="{% url 'quizzes.views.question' quiz.id question.idx instance.idx %}" method="post" class="form">
+<form  method="post" class="form">
     {% csrf_token %}
     <button type="button" id="insertUndoButton" class="btn btn-default disabled pull-left">
         Undo
     </button>
+    <input name="question_type" type="hidden" value="{{question_type}}">
     <input name="answer" type="hidden" id="inputAnswer">
     <button type="submit" class="btn btn-primary pull-right">
         Submit

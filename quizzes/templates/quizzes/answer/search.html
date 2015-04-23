@@ -31,8 +31,8 @@ $ ->
             .attr("y", 4)
             .text("Your Answer")
 
-    answer = {{instance.answer|safe}}
-    user_answer = {{instance.user_answer|safe}}
+    answer = "{{answer|safe}}".split " "
+    user_answer = "{{user_answer|safe}}".split " "
 
     opts =
         nodeClass: ((d) -> if (answer.indexOf d.name) != -1 then "answer" else "") 
@@ -42,7 +42,7 @@ $ ->
                 else
                     20
             )
-    tree = new BinaryTree("treeContainer", {{instance.structure|safe}}, opts)
+    tree = new BinaryTree("treeContainer", {{structure|safe}}, opts)
 
     selected = []
     tree.each (a) ->

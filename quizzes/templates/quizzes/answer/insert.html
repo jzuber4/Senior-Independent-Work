@@ -13,29 +13,35 @@ $ ->
             20
     opts =
         radius: radius
-    {% if instance.correct or instance.correct == None %}
-    tree = new BinaryTree("treeContainer", {{instance.answer|safe}}, opts)
+    {% if correct or correct == None %}
+    tree = new BinaryTree("treeContainer", {{answer|safe}}, opts)
     {% else %}
     opts.yScale = 4
-    answerTree = new BinaryTree("answerDiv", {{instance.answer|safe}}, opts)
-    userTree = new BinaryTree("userDiv", {{instance.user_answer|safe}}, opts)
+    answerTree = new BinaryTree("answerDiv", {{answer|safe}}, opts)
+    userTree = new BinaryTree("userDiv", {{user_answer|safe}}, opts)
     {% endif %}
 
 </script>
 {% endcompress %}
 {% endblock %}
 
+{% block prompt %}
+<pre>Construct a binary search tree by inserting the following keys in order:
+
+    {{structure}}</pre>
+{% endblock %}
+
 {% block acontent %}
-{% if instance.correct or instance == None %}
+{% if correct%}
 <div id="treeContainer">
 </div>
 {% else %}
 <div class="row">
-    <div id="answerDiv" class="col-sm-6">
-        <h2>The answer</h2>
-    </div>
     <div id="userDiv" class="col-sm-6">
-        <h2>Your answer</h2>
+        <h2>Your Answer</h2>
+    </div>
+    <div id="answerDiv" class="col-sm-6">
+        <h2>Correct Answer</h2>
     </div>
 </div>
 {% endif %}

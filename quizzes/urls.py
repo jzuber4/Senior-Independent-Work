@@ -5,8 +5,7 @@ from quizzes import views
 urlpatterns = patterns('',
     url(r'^$', views.quizzes),
     url(r'^quiz/(\d+)/$', views.quiz),
-    url(r'^quiz/(\d+)/question/(\d+)/attempt/(\d+)$', views.question),
-    url(r'^test/(\d+)/question/(\d+)$', views.question_test),
+    url(r'^quiz/(\d+)/question/(\d+)$', views.question),
 )
 
 
