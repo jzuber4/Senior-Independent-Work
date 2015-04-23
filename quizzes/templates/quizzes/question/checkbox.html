@@ -3,11 +3,11 @@
 {% block qcontent %}
 <form method="post" class="form">
     {% csrf_token %}
-    {% for answer in answers %}
+    {% for statement in statements %}
     <div class="checkbox">
         <label>
             <input type="checkbox" name="answer" id="options{{forloop.counter0}}" value="{{forloop.counter0}}">
-            {{answer}}
+            {{statement}}
         </label>
     </div>
     {% endfor %}

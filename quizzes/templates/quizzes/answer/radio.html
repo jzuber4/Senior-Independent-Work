@@ -5,7 +5,7 @@
         <div class="col-sm-6">
             <h4>Your Answer</h4>
             <form class="form">
-                {% for a in answers %}
+                {% for statement in statements %}
                 <div class="radio">
                     <label>
                         {% if forloop.counter0 == user_answer %}
@@ -15,7 +15,7 @@
                         <input type="radio" name="answer" id="options{{forloop.counter0}}" 
                         value="{{forloop.counter0}}" disabled>
                         {% endif %}
-                        {{a}}
+                        {{statement}}
                     </label>
                 </div>                 
                 {% endfor %}
@@ -24,7 +24,7 @@
         <div class="col-sm-6">
             <h4>Correct Answer</h4>
             <form class="form">
-                {% for a in answers %}
+                {% for statement in statements %}
                 <div class="radio">
                     <label>
                         {% if forloop.counter0 == answer %}
@@ -34,7 +34,7 @@
                         <input type="radio" name="answer" id="options{{forloop.counter0}}" 
                         value="{{forloop.counter0}}" disabled>
                         {% endif %}
-                        {{a}}
+                        {{statement}}
                     </label>
                 </div>                 
                 {% endfor %}

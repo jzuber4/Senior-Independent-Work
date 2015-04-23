@@ -4,29 +4,6 @@ from django.utils import timezone
 from quizzes.models import Quiz, Question, QuestionInstance
 from random import randint
 
-class QType:
-    BST_INSERT   = 0
-    BST_SEARCH   = 1
-    SHORT_ANSWER = 2
-    RADIO        = 3
-    CHECKBOX     = 4
-    OTHER        = 5
-
-def get_question_type(question):
-    if question["type"] == "SHORTANSWER":
-        if question["referenceNum"] == 1:
-            return QType.BST_INSERT
-        elif question["referenceNum"] == 2:
-            return QType.BST_SEARCH
-        else:
-            return QType.SHORT_ANSWER
-    elif question["type"] == "RADIO":
-        return QType.RADIO
-    elif question["type"] == "CHECKBOX":
-        return QType.CHECKBOX
-    else:
-        return QType.OTHER
-
 # binary tree
 class BNode:
     def __init__(self, item):

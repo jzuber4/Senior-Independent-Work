@@ -15,22 +15,36 @@
 <div class="container raised">
     <div class="row">
         <div class="col-sm-12">
-            <h1>{{title}}</hi>
+            <h3>{{title}}</h3>
             <h4>
                 {% if correct %}
                 Correct!
                 {% else %}
-                {% if correct != None %}
                 Sorry, that was incorrect.
-                {% else %}
-                It seems like you didn't answer in time.
-                {% endif %}
                 {% endif %}
             </h4>
             <h4>You got {{score}} out of {{max_score}} points</h4>
+            <a href="{% url 'quizzes.views.quiz' quiz_id %}"
+                class="btn btn-success">
+                    Go Back To Quiz
+            </a>
+            <a href="{% url 'quizzes.views.question_test' quiz_id question_idx %}"
+                class="btn btn-primary">
+                Try Again? 
+            </a>
+            <hr/>
+            <p> Prompt: </p>
+            {% block prompt %}
+            <pre>{{ prompt }}</pre>
+            {% endblock %}
+            {% if explanation %}
+            <p> Explanation: </p>
+            {% endif %}
+            {% block explanation %}
             {% if explanation %}
             <pre>{{explanation}}</pre>
             {% endif %}
+            {% endblock %}
             <p>Seed: {{seed}}<p>
             {% block acontent %}
             {% endblock %}

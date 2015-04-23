@@ -25,6 +25,10 @@ $ ->
 {% endcompress %}
 {% endblock %}
 
+{% block prompt %}
+<pre>Insert the following keys into the tree by clicking on the empty nodes.</pre>
+{% endblock %}
+
 {% block qcontent %}
 <form  method="post" class="form" autocomplete="off">
     {% csrf_token %}

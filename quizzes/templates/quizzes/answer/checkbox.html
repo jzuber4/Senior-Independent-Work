@@ -1,11 +1,12 @@
 {% extends "quizzes/answer/base_test.html" %}
+
 {% block acontent %}
 <div class="container">
     <div class="row">
         <div class="col-sm-6">
             <h4>Your Answer</h4>
             <form class="form">
-                {% for a in answers %}
+                {% for statement in statements %}
                 <div class="checkbox">
                     <label>
                         {% if forloop.counter0 in user_answer %}
@@ -15,7 +16,7 @@
                         <input type="checkbox" name="answer" id="options{{forloop.counter0}}" 
                         value="{{forloop.counter0}}" disabled>
                         {% endif %}
-                        {{a}}
+                        {{statement}}
                     </label>
                 </div>                 
                 {% endfor %}
@@ -24,7 +25,7 @@
         <div class="col-sm-6">
             <h4>Correct Answer</h4>
             <form class="form">
-                {% for a in answers %}
+                {% for statement, explanation in statements_and_explanations %}
                 <div class="checkbox">
                     <label>
                         {% if forloop.counter0 in answer %}
@@ -34,7 +35,11 @@
                         <input type="checkbox" name="answer" id="options{{forloop.counter0}}" 
                         value="{{forloop.counter0}}" disabled>
                         {% endif %}
-                        {{a}}
+                        {% if explanation %}
+                        {{explanation}}
+                        {% else %}
+                        {{statement}}
+                        {% endif %}
                     </label>
                 </div>                 
                 {% endfor %}

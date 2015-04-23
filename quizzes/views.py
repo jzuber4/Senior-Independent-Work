@@ -45,7 +45,7 @@ def question_test(request, quiz_id, question_idx):
     # connect to SOAP service
     if request.method == 'GET':
         # get the question and its type
-        question = get_exercise('vi', quiz_id, question_idx, 1)
+        question = get_exercise('vi', quiz_id, question_idx)
         question_type = get_question_type(question)
 
         # parse the question
@@ -56,11 +56,14 @@ def question_test(request, quiz_id, question_idx):
             'seed':          question['seed'],
             'title':         question['title'],
         }
-        if question_type == QType.BST_INSERT or question_type == QType.BST_SEARCH and not question['isText']:
-            d['prompt'] = json.loads(question['prompt'])['text']
-            d['structure'] = json.loads(question['prompt'])['json']
+        if question_type == QType.BST_INSERT:
+            d['promptPretty'] = question['promptPretty']
+            d['structure']    = json.dumps(question['promptPrettyStructure'].split())
+        elif question_type == QType.BST_SEARCH:
+            d['promptPretty'] = question['promptPretty']
+            d['structure']    = question['promptPrettyStructure']
         elif question_type == QType.CHECKBOX or question_type == QType.RADIO:
-            d['answers'] = question['answers']
+            d['statements'] = question['statements']
 
         # render the appropriate template
         if question_type == QType.BST_INSERT:
@@ -82,35 +85,46 @@ def question_test(request, quiz_id, question_idx):
 
         # read in the answer
         user_answer = request.POST.get('answer')
-        if question_type == QType.BST_INSERT or question_type == QType.BST_SEARCH:
+        if question_type == QType.BST_SEARCH:
             user_answer = json.loads(user_answer)
         elif question_type == QType.CHECKBOX:
             user_answer = " ".join(request.POST.getlist('answer'))
 
         # submit the answer and get the result
-        result = json.loads(client.service.getResult('vi', quiz_id, question_idx, user_answer))
+        result = get_result('vi', quiz_id, question_idx, user_answer)
         print(result)
 
         # parse the result
         # set up context for template
         d = {
-            'user_answer': user_answer,
-            'correct':     result['score'] == result['maxScore'],
-            'answer':      result['answer'],
-            'explanation': result['explanation'],
-            'max_score':   result['maxScore'],
-            'score':       result['score'],
-            'seed':        result['seed'],
-            'title':       result['title'],
+            'user_answer':  user_answer,
+            'correct':      result['score'] == result['maxScore'],
+            'answer':       result['answer'],
+            'max_score':    result['maxScore'],
+            'score':        result['score'],
+            'seed':         result['seed'],
+            'title':        result['title'],
+            'prompt':       result['prompt'],
+            'quiz_id':      quiz_id,
+            'question_idx': question_idx,
         }
-        if question_type == QType.BST_INSERT or question_type == QType.BST_SEARCH and result['isText']:
-            d['structure'] = json.loads(result['prompt'])['json']
+        if 'explanation' in result:
+            d['explanation'] = result['explanation']
+        if question_type == QType.BST_INSERT:
+            d['answer']       = json.loads(result['explanationPrettyStructure'])[-1]
+            d['promptPretty'] = result['promptPretty']
+            d['structure']    = result['promptPrettyStructure']
+        elif question_type == QType.BST_SEARCH:
+            d['promptPretty'] = result['promptPretty']
+            d['structure'] = result['promptPrettyStructure']
         elif question_type == QType.RADIO:
-            d['answers']     = result['answers']
+            d['statements']     = result['statements']
             d['answer']      = int(result['answer'])
             d['user_answer'] = int(user_answer)
         elif question_type == QType.CHECKBOX:
-            d['answers']     = result['answers']
+            d['explanations']   = result['explanations']
+            d['statements']     = result['statements']
+            d['statements_and_explanations'] = zip(result['statements'], result['explanations'])
             d['answer']      = [int(a) for a in result['answer'].split()]
             d['user_answer'] = [int(a) for a in user_answer.split()]
 

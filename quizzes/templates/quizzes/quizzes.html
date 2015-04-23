@@ -3,7 +3,8 @@
 {% block title %}Quizzes{% endblock %} 
 
 {% block content %}
-<div class="container raised">
+{# if there are quizzes, display info about them all #}
+<div class="container">
     <div class="row">
         <div class="col-sm-12">
             <h1>Your Quizzes</h1>
@@ -18,27 +19,30 @@
             {% endif %}
             {% endif %}
             </p>
-        </div>
-    </div>
-</div>
-{% if quizzes|length != 0 %}
-{# if there are quizzes, display info about them all #}
-{% for quiz in quizzes %}
-<div class="container raised">
-    <div class="row">
-        <div class="col-sm-12">
-            <h2><a href="{% url 'quizzes.views.quiz' quiz.quizId %}">{{ quiz.quizTitle }}</a></h2>
-            {% if quiz.numQuestions == 1 %}
-            <p>1 Question</p>
-            {% else %}
-            <p>{{quiz.numQuestions}} questions</p>
+            {% if quizzes|length != 0 %}
+            <table class="table" id="quizzes">
+                <thead>
+                    <tr>
+                        <th>Quiz</th>
+                        <th>Questions</th>
+                        <th>Start</th>
+                        <th>End</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for quiz in quizzes %}
+                    <tr>
+                        <td><a href="{% url 'quizzes.views.quiz' quiz.quizId %}">{{ quiz.quizTitle }}</a></td>
+                        <td>{{quiz.numQuestions}}</td>
+                        <td>{{quiz.startDate}}</td>
+                        <td>{{quiz.endDate}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
             {% endif %}
-            <p>Quiz Starts: {{quiz.startDate}}</p>
-            <p>Quiz Ends: {{quiz.endDate}}</p>
         </div>
     </div>
 </div>
-{% endfor %}
-{% endif %}
 {% endblock %}
 

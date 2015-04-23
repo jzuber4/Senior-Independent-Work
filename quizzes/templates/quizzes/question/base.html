@@ -13,11 +13,17 @@
 {% endblock %}
 
 {% block content %}
-<div class="container raised">
+<div class="container">
     <div class="row">
         <div class="col-sm-12">
             <h1>{{title}}</h1>
+            {% block prompt %}
+            {% if promptPretty %}
+            <pre>{{promptPretty}}</pre>
+            {% else %}
             <pre>{{prompt}}</pre>
+            {% endif %}
+            {% endblock %}
             <p>Seed: {{seed}}</p>
             {% block qcontent %}
             {% endblock %}

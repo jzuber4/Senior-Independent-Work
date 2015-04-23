@@ -317,11 +317,11 @@ class @BinaryTree extends Tree
 
     insert: (node, name) =>
         node.name = name
-        node.children = [{name:null,parent:node,children:[]},{name:null,parent:node,children:[]}]
+        node.children = [{name:"",parent:node,children:[]},{name:"",parent:node,children:[]}]
         do @update
 
     remove: (node) =>
-        emptyNode = {name: null, parent:node.parent, children:[]}
+        emptyNode = {name:"", parent:node.parent, children:[]}
         index = node.parent.children.indexOf node
         node.parent.children[index] = emptyNode
         do @update

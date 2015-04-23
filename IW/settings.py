@@ -96,6 +96,7 @@ CAS_RESPONSE_CALLBACKS = (
 
 # soap url for quiz service
 QUIZ_SERVICE_URL = 'http://10.8.241.134:8080/Initial/services/Main?wsdl'
+QUIZ_SERVICE_DEBUG = True
 
 
 # Static files (CSS, JavaScript, Images)
@@ -122,3 +123,15 @@ COMPRESS_PRECOMPILERS = (
 
 # Directories containing templates
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
+
+# Deployment
+if False:
+    with open('secret_key.txt') as f:
+        SECRET_KEY = f.read().strip()
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    DEBUG = False
+    ALLOWED_HOSTS = [
+        '.princeton.edu'  # Allow princeton domain and subdomains
+    ]
+

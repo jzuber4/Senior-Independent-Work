@@ -91,9 +91,9 @@ class @BSTInsertQuestion
         @update @nums
 
         # create tree
-        treeData = {name: data[0], children: [{name: null, children: []}, {name: null, children: []}]}
+        treeData = {name: data[0], children: [{name: "", children: []}, {name: "", children: []}]}
         opts =
-            nodeClass: ((d) -> if d.name? then "" else "clickable dashed")
+            nodeClass: ((d) -> if d.children then "" else "clickable dashed")
         @tree = new BinaryTree(divId, treeData, opts)
         @inserts = []
 
@@ -101,7 +101,7 @@ class @BSTInsertQuestion
         onClick = (d) =>
             # can only insert in empty nodes
             # and if there are numbers left to insert
-            if d.name? or not @nums[0]?
+            if d.children or not @nums[0]?
                 return
 
             num = @nums[0]
