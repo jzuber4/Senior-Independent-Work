@@ -1,0 +1,29 @@
+{% extends "quizzes/answer/base.html" %}
+
+{% block acontent %}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <table class="table">
+                <thead>
+                    <th></th>
+                    <th>Your Answer</th>
+                    <th>Correct Answer</th>
+                    <th>Explanation</th>
+                </thead>
+                <tbody>
+                    {% for statement, user_answer, answer, explanation  in info %}
+                    <tr>
+                        <td>{{ statement }}</td>
+                        <td>{{ user_answer }}</td>
+                        <td>{{ answer }}</td>
+                        <td>{{ explanation }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

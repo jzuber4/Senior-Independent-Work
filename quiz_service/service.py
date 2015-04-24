@@ -54,9 +54,10 @@ def get_result(user_id, quiz_id, question_idx, user_answer):
 class QType:
     BST_INSERT   = "Q_TYPE_BST_INSERT"
     BST_SEARCH   = "Q_TYPE_BST_SEARCH"
-    SHORT_ANSWER = "Q_TYPE_SHORT_ANSWER"
-    RADIO        = "Q_TYPE_RADIO"
     CHECKBOX     = "Q_TYPE_CHECKBOX"
+    MATCHING     = "Q_TYPE_MATCHING"
+    RADIO        = "Q_TYPE_RADIO"
+    SHORT_ANSWER = "Q_TYPE_SHORT_ANSWER"
     OTHER        = "Q_TYPE_OTHER"
 
 def get_question_type(question):
@@ -71,6 +72,8 @@ def get_question_type(question):
         return QType.RADIO
     elif question["type"] == "CHECKBOX":
         return QType.CHECKBOX
+    elif question["type"] == "MATCHING":
+        return QType.MATCHING
     else:
         return QType.OTHER
 

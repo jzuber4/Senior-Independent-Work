@@ -1,0 +1,24 @@
+{% extends "quizzes/question/base.html" %}
+
+{% block qcontent %}
+<form method="post" class="form-horizontal" autocomplete="off">
+    {% csrf_token %}
+    {% for statement in statements %}
+    <div class="form-group">
+        <label for="statement{{forloop.counter0}}" class="col-sm-6 control-label">{{ statement }}</label>
+        <div class="col-sm-6">
+            <select class="form-control" id="statement{{forloop.counter0}}" name="answer">
+                {% for option in options %}
+                <option value="{{forloop.counter0}}">{{option}}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    {% endfor %}
+    <input name="question_type" type="hidden" value="{{question_type}}">
+    <button type="submit" class="btn btn-primary">
+        Submit
+    </button>
+</form>
+{% endblock %}
+
