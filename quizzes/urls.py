@@ -6,6 +6,7 @@ urlpatterns = patterns('',
     url(r'^$', views.quizzes),
     url(r'^quiz/(\d+)/$', views.quiz),
     url(r'^quiz/(\d+)/question/(\d+)$', views.question),
+    url(r'^create/$', views.create_quiz),
 )
 
 

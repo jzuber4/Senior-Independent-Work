@@ -1,9 +1,10 @@
 import json
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import Http404, HttpResponse
 from django.shortcuts import  get_object_or_404, redirect, render
 from django.utils import timezone
-from quiz_service.service import get_quizzes, get_exercise, get_result, get_question_type, QType
+from quiz_service import service as qs
+from quiz_service.service import QType, get_question_type
 from time import strptime
 
 # Create your views here.
@@ -12,7 +13,7 @@ from time import strptime
 def quizzes(request):
     # get all quizzes, will potentially modify to get quizzes for a user
     d = {
-        'quizzes': get_quizzes(),
+        'quizzes': qs.get_quizzes(),
     }
     return render(request, 'quizzes/quizzes.html', d)
 
@@ -20,10 +21,8 @@ def quizzes(request):
 def quiz(request, quiz_id):
     # get that quiz
     # NOTE: THIS IS CURRENTLY NOT FUNCTIONAL, NEED QUIZ SERVICE TO SUPPORT GETTING QUESTIONS OF QUIZ
-    d = {
-
-    }
-    return render (request, 'quizzes/quiz.html', d)
+    qs.select_quiz(request.user.username, quiz_id)
+    return render (request, 'quizzes/quiz.html')
 
 @login_required
 def question(request, quiz_id, question_idx):
@@ -32,7 +31,7 @@ def question(request, quiz_id, question_idx):
     # connect to SOAP service
     if request.method == 'GET':
         # get the question and its type
-        question = get_exercise('vi', quiz_id, question_idx)
+        question = qs.get_exercise(request.user.username, quiz_id, question_idx)
         question_type = get_question_type(question)
 
         # parse the question
@@ -72,7 +71,7 @@ def question(request, quiz_id, question_idx):
         elif question_type == QType.SHORT_ANSWER:
             return render(request, 'quizzes/question/short_answer.html', d)
         else:
-            HttpResponse(400, 'Sorry, that question type is not supported.')
+            return HttpResponse(400, 'Sorry, that question type is not supported.')
 
     if request.method == 'POST':
         # get the type of the question
@@ -86,7 +85,8 @@ def question(request, quiz_id, question_idx):
             user_answer = " ".join(request.POST.getlist('answer'))
 
         # submit the answer and get the result
-        result = get_result('vi', quiz_id, question_idx, user_answer)
+        result = qs.get_result(request.user.username, quiz_id, question_idx, user_answer)
+        question_type = get_question_type(result)
 
         # parse the result
         # set up context for template
@@ -102,7 +102,7 @@ def question(request, quiz_id, question_idx):
             'title':        result['title'],
             'user_answer':  user_answer,
         }
-        if 'explanation' in result and not question_type == QType.MATCHING:
+        if 'explanation' in result:
             d['explanation'] = result['explanation']
         if question_type == QType.BST_INSERT:
             # explanationPrettyStructure is a list of trees as keys are inserted
@@ -123,7 +123,7 @@ def question(request, quiz_id, question_idx):
         elif question_type == QType.MATCHING:
             d['options'] = result['options']
             # put all info in list of tuples for easy iteration
-            e = json.loads(result['explanation'])
+            e = json.loads(result['explanations'])
             s = result['statements']
             a = [d['options'][int(a)] for a in result['answer'].split()]
             u = [d['options'][int(u)] for u in user_answer.split()]
@@ -147,7 +147,26 @@ def question(request, quiz_id, question_idx):
         elif question_type == QType.SHORT_ANSWER:
             return render(request, 'quizzes/answer/short_answer.html', d)
         else:
-            HttpResponse(400, 'Sorry, that question type is not supported.')
+            return HttpResponse(400, 'Sorry, that question type is not supported.')
+
+@login_required
+@user_passes_test(lambda u: u.userinfo.is_teacher)
+def create_quiz(request):
+    if request.method == 'GET':
+        question_types_and_titles = qs.get_question_types()
+        question_types = [t[0] for t in question_types_and_titles]
+        question_titles = [t[1] for t in question_types_and_titles]
+        d = {
+            'question_titles': json.dumps(question_titles),
+            'question_types': json.dumps(question_types),
+            'grading_types': qs.get_grading_types(),
+        }
+        return render(request, 'quizzes/create_quiz.html', d)
+    else:
+        pass
+
+
+
 
 
 

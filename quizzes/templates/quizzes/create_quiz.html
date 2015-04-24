@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% load compress %}
+{% load staticfiles %}
+{% load quiz_extras %}
+
+{% block title %}Create a Quiz{% endblock %} 
+
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static "quizzes/css/jquery.datetimepicker.css" %}" />
+{% endblock %}
+
+{% block js %}
+{{ block.super }}
+{% compress js %}
+<script type="text/javascript" src="{% static "quizzes/scripts/jquery.datetimepicker.js" %}"></script>
+<script type="text/javascript">
+    $(function() {
+        // read in question types and titles
+        var question_types = {{ question_types|safe }};
+        var question_titles = {{ question_titles|safe }};
+        var question_type_options = _.map(question_types, function(t) { return "<option>"+t+"</option>"}).join("\n");
+
+        // initialize datetimepicker
+        var defaults = {
+            startDate:   new Date(),
+            defaultDate: new Date()
+        };
+        $("#startTime").datetimepicker(defaults);
+        $("#endTime").datetimepicker(defaults);
+
+        // give hints for fields that need to be filled
+        $("#startTime").parent().addClass("has-error");
+        $("#endTime").parent().addClass("has-error");
+        $("#title").parent().addClass("has-error");
+        var submitReady = function() {
+            return _.every(_.map(
+                ["#title", "#startTime", "#endTime"], 
+                function(t) {
+                    return $.trim($(t).val()).length > 0;
+                }
+            ));
+        };
+        var checkEmpty = function() {
+            if ($.trim($(this).val())) {
+                $(this).parent().removeClass("has-error");
+            } else {
+                $(this).parent().addClass("has-error");
+            }
+            if (submitReady()) {
+                $("#alertDiv").html("");
+            }
+        };
+        $("#startTime").change(checkEmpty);
+        $("#endTime").change(checkEmpty);
+        $("#title").change(checkEmpty);
+
+        // make checkboxes toggle their attached inputs
+        $("#timeLimitEnabled").change(function() {
+            var disabled = !$(this).is(':checked');
+            $("#timeLimit").prop('disabled', disabled);
+        });
+        $("#timeLimitPerQuestionEnabled").change(function() {
+            var disabled = !$(this).is(':checked');
+            $("#timeLimitPerQuestion").prop('disabled', disabled);
+        });
+
+        // construct templates for adding new questions
+        var label       = _.template("<label for='<%= id %>'><%= text %></label>");
+        var textInput   = _.template("<input  class='form-control' id='<%= id %>' type='text'>");
+        var numberInput = _.template("<input  class='form-control' id='<%= id %>' type='number' min='1' value='<%= value %>'>");
+        var selectInput = _.template("<select class='form-control' id='<%= id %>'><%= options %></select>");
+        var buttonTemplate = _.template("<button class='btn btn-default' id='<%= id %>' type='button'><%= text %></button>");
+        var checkboxAddon = _.template([
+            "<span class='input-group-addon'>",
+            "   <input type='checkbox' id='<%= id %>' ariaLabel='<%= ariaLabel %>' <%= checked %>>",
+            "</span>"
+        ].join('\n'));
+        var inputGroup = _.template([
+            "<div class='input-group'>", 
+            "   <%= contents %>",
+            "</div>"
+        ].join('\n'));
+        var formCol = _.template([
+            "<div class='col-md-<%= n %> form-group'>",
+            "   <%= contents %>",
+            "</div>"
+        ].join('\n'));
+
+        // counter for unique question ids 
+        var n = 0
+
+        // on click, add a question to the form
+        $("#addQuestion").click(function() {
+            n += 1;
+            var id = _.template("<%= text %>"+n);
+            var is_checked = $("#timeLimitPerQuestionEnabled").is(":checked");
+            var checked = is_checked ? "checked='checked'" : "";
+
+            // construct the ids
+            var questionId  = id({text: "q"});
+            var titleId     = id({text: "qTitle"});
+            var typeId      = id({text: "qType"});
+            var gradingId   = id({text: "qGrading"});
+            var attemptsId  = id({text: "qAttempts"});
+            var scoreId     = id({text: "qScore"});
+            var timeLimitId = id({text: "qTimeLimit"});
+            var timeLimitCheckboxId = id({text: "qTimeLimitEnabled"});
+            var buttonId    = id({text: "removeButton"});
+            
+            // construct the labels
+            var titleLabel     = label({id: titleId, text: "Question title"});
+            var typeLabel      = label({id: typeId, text: "Type"});
+            var gradingLabel   = label({id: gradingId, text: "Grading strategy"});
+            var attemptsLabel  = label({id: attemptsId, text: "Number of attempts"});
+            var scoreLabel     = label({id: scoreId, text: "Max score"});
+            var timeLimitLabel = label({id: timeLimitId, text: "Time limit in minutes"});
+
+            // construct the inputs
+            var titleInput     = textInput({id: titleId});
+            var typeInput      = selectInput({id: typeId, options: question_type_options});
+            var gradingInput   = selectInput({id: gradingId, options: $("#gradingType").clone().html()});
+            var attemptsInput  = numberInput({id: attemptsId, value: $("#numAttempts").val()});
+            var scoreInput     = numberInput({id: scoreId, value: $("#maxScore").val()});
+            var timeLimitInput = numberInput({id: timeLimitId, value: $("#timeLimitPerQuestion").val()});
+            var timeLimitCheckbox = checkboxAddon({id: timeLimitCheckboxId, ariaLabel: "Enable time limit", checked: checked});
+            var timeInputGroup = inputGroup({contents: timeLimitCheckbox + timeLimitInput});
+            var button         = buttonTemplate({id: buttonId, text: "Remove"});
+
+            // construct the columns
+            var title     = formCol({n: 2, contents: titleLabel + titleInput}); 
+            var type      = formCol({n: 2, contents: typeLabel + typeInput});
+            var grading   = formCol({n: 2, contents: gradingLabel + gradingInput});
+            var attempts  = formCol({n: 2, contents: attemptsLabel + attemptsInput});
+            var score     = formCol({n: 2, contents: scoreLabel + scoreInput});
+            var timeLimit = formCol({n: 2, contents: timeLimitLabel + timeInputGroup});
+
+            // construct the rows
+            var row       = "<div class='row'>"+title+type+grading+score+attempts+timeLimit+"</div>";
+            var question  = "<div id='"+questionId+"'><hr>"+row+button+"</div>";
+
+            // add question to page
+            $("form").append(question);
+            $("#numQuestions").val(parseInt($("#numQuestions").val()) + 1);
+
+            // attach type to title
+            // set starting title
+            $("#"+titleId).val(question_titles[0]);
+            $("#"+typeId).change(function() {
+                val = $(this).val();
+                index = question_types.indexOf(val);
+                $("#"+titleId).val(question_titles[index]);
+            });
+
+            // Configure grading, set as default
+            $("#"+gradingId).val($("#gradingType").val());
+
+            // Connect checkbox and time limit 
+            checkboxChange = function() {
+                var disabled = !$("#"+timeLimitCheckboxId).is(':checked');
+                $("#"+timeLimitId).prop('disabled', disabled);
+                $("#"+timeLimitId).val(disabled ? "" : $("#timeLimitPerQuestion").val());
+            };
+            checkboxChange();
+            $("#"+timeLimitCheckboxId).change(checkboxChange);
+
+            // Make remove button functional 
+            $("#"+buttonId).click(function(){
+                $("#"+questionId).remove();
+                $("#numQuestions").val(parseInt($("#numQuestions").val()) - 1);
+            });
+        });
+
+        $("#submitButton").click(function() {
+            if (submitReady()) {
+                $("form").submit();
+            } else {
+                $("#alertDiv").html(
+                    ["<div class='alert alert-danger' role='alert'>",
+                    "  'Quiz title', 'Start date and time', and 'End date and time' must be filled in.",
+                    "</div>"].join("\n")
+                );
+            }
+        });
+    });
+</script>
+{% endcompress %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <h1>Create a Quiz</h1>
+            <form method="post" class="form" autocomplete="off">
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <label class="control-label" for="title">Quiz title</label>
+                        <input type="text" class="form-control" id="title" placeholder="Enter a title for the quiz">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="control-label" for="numQuestions">Number of questions</label>
+                        <input type="text" class="form-control" id="numQuestions" value="0" readonly>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <label class="control-label" for="startTime">Start date and time</label>
+                        <input type="text" class="form-control" id="startTime">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="control-label" for="endTime">End date and time</label>
+                        <input type="text" class="form-control" id="endTime">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <label class="control-label" for="timeLimit">Time limit in minutes</label>
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                <input type="checkbox" id="timeLimitEnabled"  aria-label="Enable time limit.">
+                            </span>
+                            <input type="number" class="form-control" id="timeLimit" min="1" disabled>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="control-label" for="timeLimitPerQuestion">Time limit for each question in minutes</label>
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                <input type="checkbox" id="timeLimitPerQuestionEnabled"
+                                aria-label="Enable time limit for each question." checked>
+                            </span>
+                            <input type="number" class="form-control" id="timeLimitPerQuestion" value="30" min="1">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-4">
+                        <label class="control-label" for="numAttempts">Number of attempts per question</label>
+                        <input type="number" class="form-control" id="numAttempts" value="5" min="1">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label class="control-label" for="maxScore">Maximum score per question</label>
+                        <input type="text" class="form-control" id="maxScore" value="5" min="1">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label class="control-label" for="gradingType">Grading strategy for each question</label>
+                        <select class="form-control" id="gradingType">
+                            {% for option in grading_types %}
+                            <option>
+                            {{ option }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </form>
+            <br>
+            <button class="btn btn-default" type="button" id="addQuestion">Add question</button>
+            <button class="btn btn-primary pull-right" type="submit" id="submitButton">Submit</button>
+            <p>
+            <div id="alertDiv"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
