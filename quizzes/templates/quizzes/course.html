@@ -1,21 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}Quizzes{% endblock %} 
+{% block title %}{{ course_title }}{% endblock %} 
 
 {% block content %}
 {# if there are quizzes, display info about them all #}
 <div class="container">
     <div class="row">
         <div class="col-sm-12">
-            <h1>Your Quizzes</h1>
+            <h2>{{course_title}}</h2>
             <p>
             {% if quizzes|length == 0 %}
-            You have no quizzes.
+            This course has <strong>no quizzes</strong>. 
             {% else %}
             {% if quizzes|length == 1 %}
-            You have 1 quiz.
+            There is <strong>1 quiz</strong> in this course.
             {% else %}
-            You have {{quizzes|length}} quizzes.
+            There are <strong>{{ quizzes|length }} quizzes</strong> in this course.
             {% endif %}
             {% endif %}
             </p>
@@ -25,6 +25,7 @@
                     <tr>
                         <th>Quiz</th>
                         <th>Questions</th>
+                        <th>Score</th>
                         <th>Start</th>
                         <th>End</th>
                     </tr>
@@ -32,8 +33,9 @@
                 <tbody>
                     {% for quiz in quizzes %}
                     <tr>
-                        <td><a href="{% url 'quizzes.views.quiz' quiz.quizId %}">{{ quiz.quizTitle }}</a></td>
+                        <td><a href="{% url 'quizzes.views.quiz' course_id quiz.quizId %}">{{ quiz.quizTitle }}</a></td>
                         <td>{{quiz.numQuestions}}</td>
+                        <td>{{quiz.quizScore}}/{{quiz.maxScore}}</td>
                         <td>{{quiz.startDate}}</td>
                         <td>{{quiz.endDate}}</td>
                     </tr>

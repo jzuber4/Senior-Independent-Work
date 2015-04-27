@@ -2,14 +2,31 @@ import json
 import os
 import random
 
-def get_quizzes():
-    return [
-            {"quizId": 1, "quizTitle": "Fake Quiz 1", "numQuestions":5, "startDate":"2015-08-07 13:13:13", "endDate":"2015-08-07 13:50:00"},
-            {"quizId": 2, "quizTitle": "Fake Quiz 2", "numQuestions":5, "startDate":"2015-08-07 13:13:13", "endDate":"2015-08-07 13:50:00"},
-            {"quizId": 3, "quizTitle": "Fake Quiz 3", "numQuestions":5, "startDate":"2015-08-07 13:13:13", "endDate":"2015-08-07 13:50:00"},
-            {"quizId": 4, "quizTitle": "Fake Quiz 4", "numQuestions":5, "startDate":"2015-08-07 13:13:13", "endDate":"2015-08-07 13:50:00"},
-            {"quizId": 5, "quizTitle": "Fake Quiz 5", "numQuestions":5, "startDate":"2015-08-07 13:13:13", "endDate":"2015-08-07 13:50:00"},
-            ]
+def is_admin():
+    return True
+
+def select_quiz():
+    return
+
+def get_attempt_info():
+    filename = 'debug_data_attempt_info.txt'
+    location = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    return json.loads("".join([line.strip() for line in open(os.path.join(location, filename))]))
+
+def get_user_courses():
+    filename = 'debug_data_user_courses.txt'
+    location = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    return json.loads("".join([line.strip() for line in open(os.path.join(location, filename))]))
+
+def get_course_quizzes():
+    filename = 'debug_data_course_quizzes.txt'
+    location = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    return json.loads("".join([line.strip() for line in open(os.path.join(location, filename))]))
+
+def get_quiz_info():
+    filename = 'debug_data_quiz_info.txt'
+    location = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    return json.loads("".join([line.strip() for line in open(os.path.join(location, filename))]))
 
 def get_exercise():
     # exercises contains, in order:
@@ -20,7 +37,8 @@ def get_exercise():
     # RADIO exercise
     # SHORT_ANSWER exercise
     location = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-    exercises = [json.loads(line.strip()) for line in open(os.path.join(location, 'debug_data_exercises.txt'))]
+    filename = 'debug_data_exercises.txt'
+    exercises = [json.loads(line.strip()) for line in open(os.path.join(location, filename))]
     return random.choice(exercises)
 
 def get_result():
@@ -32,7 +50,8 @@ def get_result():
     # RADIO result
     # SHORT_ANSWER result
     location = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-    results = [json.loads(line.strip()) for line in open(os.path.join(location, 'debug_data_results.txt'))]
+    filename = 'debug_data_results.txt'
+    results = [json.loads(line.strip()) for line in open(os.path.join(location, filename))]
     return random.choice(results)
 
 

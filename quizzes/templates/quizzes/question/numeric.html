@@ -1,0 +1,55 @@
+{% extends "quizzes/question/base.html" %}
+{% load compress %}
+
+{% block js %}
+{{ block.super }}
+{% compress js %}
+<script type="text/javascript">
+    $(function() {
+        var valid = function() {
+            answer = $("#answerInput").val();
+            return !isNaN(answer) && $.trim(answer).length > 0;
+        };
+
+        $("form").submit(function(e) {
+            canSubmit = valid();
+            if (!canSubmit) {
+                e.preventDefault();
+                $("#alertDiv").html([
+                    "<div class='alert alert-danger' role='alert'>",
+                    "   Input a valid number",
+                    "</div>"].join("\n"));
+            }
+        });
+
+        $("#answerInput").on('input', function() {
+            canSubmit = valid();
+            if (canSubmit) {
+                $("#alertDiv").html("");
+                $("#answerInput").parent().removeClass("has-error");
+            } else {
+                $("#answerInput").parent().addClass("has-error");
+            }
+        });
+        // starts out invalid
+        $("#answerInput").parent().addClass("has-error");
+    });
+</script>
+{% endcompress %}
+{% endblock %}
+
+{% block qcontent %}
+<form method="post" class="form" autocomplete="off">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="answerInput" class="control-label">Input a number</label>
+        <input name="answer" id="answerInput" type="text" class="form-control" placeholder="Answer" autocomplete="off">
+    </div>
+    <input name="question_type" type="hidden" value="{{question_type}}">
+    <div id="alertDiv"></div>
+    <button type="submit" class="btn btn-primary">
+        Submit
+    </button>
+</form>
+{% endblock %}
+

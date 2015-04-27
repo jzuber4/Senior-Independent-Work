@@ -21,6 +21,9 @@
         var question_titles = {{ question_titles|safe }};
         var question_type_options = _.map(question_types, function(t) { return "<option>"+t+"</option>"}).join("\n");
 
+        // default quiz time limit
+        var defaultTimeLimit = 180;
+
         // initialize datetimepicker
         var defaults = {
             startDate:   new Date(),
@@ -59,6 +62,11 @@
         $("#timeLimitEnabled").change(function() {
             var disabled = !$(this).is(':checked');
             $("#timeLimit").prop('disabled', disabled);
+            if (disabled) {
+                $("#timeLimit").val("");
+            } else {
+                $("#timeLimit").val(defaultTimeLimit);
+            }
         });
         $("#timeLimitPerQuestionEnabled").change(function() {
             var disabled = !$(this).is(':checked');
@@ -101,42 +109,44 @@
             var questionId  = id({text: "q"});
             var titleId     = id({text: "qTitle"});
             var typeId      = id({text: "qType"});
-            var gradingId   = id({text: "qGrading"});
-            var attemptsId  = id({text: "qAttempts"});
-            var scoreId     = id({text: "qScore"});
             var timeLimitId = id({text: "qTimeLimit"});
             var timeLimitCheckboxId = id({text: "qTimeLimitEnabled"});
-            var buttonId    = id({text: "removeButton"});
+            var attemptsId  = id({text: "qAttempts"});
+            var scoreId     = id({text: "qScore"});
+            var gradingId   = id({text: "qGrading"});
             
             // construct the labels
             var titleLabel     = label({id: titleId, text: "Question title"});
             var typeLabel      = label({id: typeId, text: "Type"});
-            var gradingLabel   = label({id: gradingId, text: "Grading strategy"});
+            var timeLimitLabel = label({id: timeLimitId, text: "Time limit in minutes"});
             var attemptsLabel  = label({id: attemptsId, text: "Number of attempts"});
             var scoreLabel     = label({id: scoreId, text: "Max score"});
-            var timeLimitLabel = label({id: timeLimitId, text: "Time limit in minutes"});
+            var gradingLabel   = label({id: gradingId, text: "Grading strategy"});
 
             // construct the inputs
             var titleInput     = textInput({id: titleId});
             var typeInput      = selectInput({id: typeId, options: question_type_options});
-            var gradingInput   = selectInput({id: gradingId, options: $("#gradingType").clone().html()});
-            var attemptsInput  = numberInput({id: attemptsId, value: $("#numAttempts").val()});
-            var scoreInput     = numberInput({id: scoreId, value: $("#maxScore").val()});
             var timeLimitInput = numberInput({id: timeLimitId, value: $("#timeLimitPerQuestion").val()});
             var timeLimitCheckbox = checkboxAddon({id: timeLimitCheckboxId, ariaLabel: "Enable time limit", checked: checked});
             var timeInputGroup = inputGroup({contents: timeLimitCheckbox + timeLimitInput});
-            var button         = buttonTemplate({id: buttonId, text: "Remove"});
+            var attemptsInput  = numberInput({id: attemptsId, value: $("#numAttempts").val()});
+            var scoreInput     = numberInput({id: scoreId, value: $("#maxScore").val()});
+            var gradingInput   = selectInput({id: gradingId, options: $("#gradingType").clone().html()});
 
             // construct the columns
             var title     = formCol({n: 2, contents: titleLabel + titleInput}); 
             var type      = formCol({n: 2, contents: typeLabel + typeInput});
-            var grading   = formCol({n: 2, contents: gradingLabel + gradingInput});
+            var timeLimit = formCol({n: 2, contents: timeLimitLabel + timeInputGroup});
             var attempts  = formCol({n: 2, contents: attemptsLabel + attemptsInput});
             var score     = formCol({n: 2, contents: scoreLabel + scoreInput});
-            var timeLimit = formCol({n: 2, contents: timeLimitLabel + timeInputGroup});
+            var grading   = formCol({n: 2, contents: gradingLabel + gradingInput});
+
+            // create the button
+            var buttonId = id({text: "removeButton"});
+            var button   = buttonTemplate({id: buttonId, text: "Remove"});
 
             // construct the rows
-            var row       = "<div class='row'>"+title+type+grading+score+attempts+timeLimit+"</div>";
+            var row       = "<div class='row'>"+title+type+timeLimit+attempts+score+grading+"</div>";
             var question  = "<div id='"+questionId+"'><hr>"+row+button+"</div>";
 
             // add question to page
@@ -193,6 +203,7 @@
         <div class="col-sm-12">
             <h1>Create a Quiz</h1>
             <form method="post" class="form" autocomplete="off">
+                {% csrf_token %}
                 <div class="row">
                     <div class="form-group col-md-6">
                         <label class="control-label" for="title">Quiz title</label>
@@ -200,7 +211,7 @@
                     </div>
                     <div class="form-group col-md-6">
                         <label class="control-label" for="numQuestions">Number of questions</label>
-                        <input type="text" class="form-control" id="numQuestions" value="0" readonly>
+                        <input type="text" class="form-control" id="numQuestions" value="0" tabindex="-1" readonly>
                     </div>
                 </div>
                 <div class="row">

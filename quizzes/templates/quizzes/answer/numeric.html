@@ -1,0 +1,11 @@
+{% extends "quizzes/answer/base.html" %}
+
+{% block acontent %}
+{% if not correct %}
+<p>Your Answer: {{user_answer}}</p>
+<p>Correct Answer: {{answer}}</p>
+{% else %}
+<p>Answer: {{answer}}</p>
+{% endif %}
+{% endblock %}
+

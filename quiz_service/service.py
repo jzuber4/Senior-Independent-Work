@@ -1,3 +1,4 @@
+from functools import wraps
 import json
 import debug_data
 
@@ -5,9 +6,60 @@ class Client:
     s = None
     debug = False
 
+# source: http://stackoverflow.com/a/5929178
+# decorator which specifies an alternate function to call on error
+# used for testing when service is not available
+class DebugWrapper(object):
+    def __init__(self, debug_function):
+        self.debug_function = debug_function
+    def __call__(self, f):
+        decorator_self = self
+        @wraps(f)
+        def wrappee(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except Exception as e:
+                if Client.debug:
+                    print("Error occurred while executing {} in quiz service: {}".format(f.__name__, e))
+                    return decorator_self.debug_function()
+                else:
+                    raise
+        return wrappee
+
+@DebugWrapper(debug_data.is_admin)
 def is_admin(username):
-    # for now, everyone is a star
-    return True
+    return Client.s.isAdmin(username)
+
+@DebugWrapper(debug_data.get_user_courses)
+def get_user_courses(username):
+    return json.loads(Client.s.getUserCourses(username))
+
+@DebugWrapper(debug_data.get_course_quizzes)
+def get_course_quizzes(username, course_id):
+    return json.loads(Client.s.getCourseQuizzes(username, course_id))
+
+@DebugWrapper(debug_data.select_quiz)
+def select_quiz(username, quiz_id):
+    Client.s.selectQuiz(username, quiz_id)
+
+@DebugWrapper(debug_data.get_quiz_info)
+def get_quiz_info(username, quiz_id):
+    return json.loads(Client.s.getQuizInfo(username, quiz_id))
+
+def get_quiz_statistics(quiz_id):
+    return json.loads(Client.s.getQuizStatistics(quiz_id))
+
+@DebugWrapper(debug_data.get_exercise)
+def get_exercise(username, quiz_id, question_idx):
+    return json.loads(Client.s.getExercise(username, quiz_id, question_idx))
+
+@DebugWrapper(debug_data.get_result)
+def get_result(username, quiz_id, question_idx, user_answer):
+    return json.loads(Client.s.getResult(username, quiz_id, question_idx, user_answer))
+
+@DebugWrapper(debug_data.get_attempt_info)
+def get_attempt_info(username, quiz_id, question_idx, attempt_idx):
+    return json.loads(Client.s.getAttemptInfo(username, quiz_id, question_idx, attempt_idx))
 
 def get_question_types():
     return [
@@ -20,69 +72,36 @@ def get_question_types():
 def get_grading_types():
     return ["best", "average"]
 
-def get_quizzes():
-    try:
-        result = Client.s.getQuizzes()
-    except Exception as e:
-        if Client.debug:
-            print("ERROR OCCURED IN QUIZ_SERVICE: {}".format(e))
-            return debug_data.get_quizzes()
-        else:
-            raise
-    return json.loads(result)
-
-def get_quiz_info(user_id, quiz_id):
-    result = Client.s.getQuizInfo(user_id, quiz_id)
-    return json.loads(result)
-
-def select_quiz(user_id, quiz_id):
-    Client.s.selectQuiz(user_id, quiz_id)
-
-def get_exercise(user_id, quiz_id, question_idx):
-    try:
-        result = Client.s.getExercise(user_id, quiz_id, question_idx)
-    except Exception as e:
-        if Client.debug:
-            print("ERROR OCCURED IN QUIZ_SERVICE: {}".format(e))
-            return debug_data.get_exercise()
-        else:
-            raise
-    return json.loads(result)
-
-def get_result(user_id, quiz_id, question_idx, user_answer):
-    try:
-        result = Client.s.getResult(user_id, quiz_id, question_idx, user_answer)
-    except Exception as e:
-        if Client.debug:
-            print("ERROR OCCURED IN QUIZ_SERVICE: {}".format(e))
-            return debug_data.get_result()
-        else:
-            raise
-    return json.loads(result)
-
-class QType:
+class QuestionType:
     BST_INSERT   = "Q_TYPE_BST_INSERT"
     BST_SEARCH   = "Q_TYPE_BST_SEARCH"
     CHECKBOX     = "Q_TYPE_CHECKBOX"
     MATCHING     = "Q_TYPE_MATCHING"
+    NUMERIC      = "Q_TYPE_NUMERIC"
     RADIO        = "Q_TYPE_RADIO"
     SHORT_ANSWER = "Q_TYPE_SHORT_ANSWER"
     OTHER        = "Q_TYPE_OTHER"
 
 def get_question_type(question):
     if question["type"] == "SHORTANSWER":
+        # certain questions have special handling / pretty display
         if question["referenceNum"] == 1:
-            return QType.BST_INSERT
+            return QuestionType.BST_INSERT
         elif question["referenceNum"] == 2:
-            return QType.BST_SEARCH
+            return QuestionType.BST_SEARCH
         else:
-            return QType.SHORT_ANSWER
-    elif question["type"] == "RADIO":
-        return QType.RADIO
+            return QuestionType.SHORT_ANSWER
     elif question["type"] == "CHECKBOX":
-        return QType.CHECKBOX
+        return QuestionType.CHECKBOX
     elif question["type"] == "MATCHING":
-        return QType.MATCHING
+        return QuestionType.MATCHING
+    elif question["type"] == "NUMERIC":
+        return QuestionType.NUMERIC
+    elif question["type"] == "RADIO":
+        return QuestionType.RADIO
+    elif question["type"] == "REGEXP":
+        # handle regexp questions the same as short answer
+        return QuestionType.SHORT_ANSWER
     else:
-        return QType.OTHER
+        return QuestionType.OTHER
 

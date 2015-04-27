@@ -12,11 +12,7 @@
     stroke: lime;
     stroke-width: 5.0px;
 }
-rect {
-    fill: #fff;
-    stroke: steelblue;
-    stroke-width: 2.5px;
-}
+
 text {
     font: 15px sans-serif;
 }
@@ -38,32 +34,42 @@ text {
     stroke-opacity: 0.5;
 }
 
-
 .link {
     fill: none;
     stroke: #ccc;
     stroke-width: 2.5px;
 }
 
-/*
-div.raised {
-    background-color: white;
-    -webkit-box-shadow: 0px 4px 10px -1px rgba(0,0,0,0.50);
-    -moz-box-shadow: 0px 4px 10px -1px rgba(0,0,0,0.50);
-    box-shadow: 0px 4px 10px -1px rgba(0,0,0,0.50);
-    margin-bottom: 2px;
-    padding-top:    5px; 
-    padding-bottom: 15px;
-    padding-left:   15px; 
-    padding-right:  15px;
+/* style for bar chart */
+.axis text, .bar text {
+    font: 10px sans-serif;
+    fill: black;
 }
-*/
 
-body {
-    background-color: white;
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
 }
+
+.bar {
+    fill: steelblue;
+}
+
+/* style for rest of site *?
 
 .navbar {
     margin-bottom: 0px;
 }
 
+/* need pre's to wrap for (more) mobile-friendly question descriptions 
+ * source: http://stackoverflow.com/a/248013
+ * */
+pre {
+    white-space: pre-wrap;       /* CSS 3 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: -pre-wrap;      /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}

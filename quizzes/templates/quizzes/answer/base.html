@@ -24,14 +24,16 @@
                 {% endif %}
             </h4>
             <h4>You got {{score}} out of {{max_score}} points</h4>
-            <a href="{% url 'quizzes.views.quiz' quiz_id %}"
+            <a href="{% url 'quizzes.views.quiz' course_id quiz_id %}"
                 class="btn btn-success">
                     Go Back To Quiz
             </a>
-            <a href="{% url 'quizzes.views.question' quiz_id question_idx %}"
+            {% if attempts_left > 0 %}
+            <a href="{% url 'quizzes.views.question' course_id quiz_id question_idx %}"
                 class="btn btn-primary">
                 Try Again? 
             </a>
+            {% endif %}
             <hr/>
             <p> Prompt: </p>
             {% block prompt %}

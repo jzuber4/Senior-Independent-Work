@@ -1,86 +1,150 @@
 {% extends "base.html" %}
-{% load quiz_extras %}
+{% load staticfiles %}
 
-{% block title %}Quiz {{ quiz_id }}{% endblock %} 
+{% block title %}{{ quiz_title }}{% endblock %} 
+
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static "quizzes/css/bootstrap-slider.min.css" %}"/>
+{% endblock %}
+
+{% block js %}
+{{ block.super }}
+<script type="text/javascript" charset="utf-8" src="{% static "quizzes/scripts/histogramChart.js" %}"></script>
+<script type="text/javascript" charset="utf-8" src="{% static "quizzes/scripts/bootstrap-slider.min.js" %}"></script>
+<script type="text/javascript">
+    $(function() {
+        var scores = {{ scores|safe }},
+            maxScore = {{ quiz.maxScore|safe }},
+            throttleRate = 100,
+            debounceRate = 300,
+            numBins = 10;
+
+        // create bar chart
+        var chart = histogramChart()
+            .xMin(0)
+            .xMax(maxScore)
+            .numBins(numBins)
+            .xLabel("Scores");
+
+        var selection = d3.select("#modalChart")
+            .datum(scores);
+
+        $("#statsModal").on("shown.bs.modal", function() {
+            selection.call(chart);
+        });
+
+        var slider = $('#sliderInput').slider({
+           formatter: function(value) {
+                return 'Current value: ' + value;
+           }
+        });
+        
+        var drawChart = function() {
+            chart = chart.numBins(slider.slider('getValue'));
+            selection.call(chart); 
+        }
+        $("#sliderInput").change(_.throttle(drawChart, throttleRate)); 
+        $(window).on('resize',   _.debounce(drawChart, debounceRate)); 
+    });
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="row">
         <div class="col-sm-12">
-            <h2>{{ quiz.name }}</h2>
-            <p>The quiz is currently {{ quiz.status }}.</p>
-            {% if quiz.num_questions > 1 %}
-            <p>You have answered {{ quiz.num_answered }} out of {{ quiz.num_questions }} questions</p>
+            <h2>{{ quiz.quizTitle }}</h2>
+            <p>This quiz starts on <strong>{{ quiz.startDate }}</strong> and ends on <strong>{{ quiz.startDate }}</strong></p>
+            {% if quiz.numQuestions == 1 %}
+            There is only <strong>one question</strong> in this quiz.
             {% else %}
-            {% if quiz.num_answered == 1 %}
-            <p>You have answered the question.</p>
-            {% else %}
-            <p>You have not yet answered the question.</p>
+            There are <strong>{{quiz.numQuestions}} questions</strong> in this quiz.
             {% endif %}
-            {% endif %}
-            <p>You have {{ quiz.score }} out of {{ quiz.max_score }} points.</p>
+            </p>
+            <p>You have <strong>{{ quiz.quizScore }} out of {{ quiz.maxScore }} points</strong>.</p>
+            <p>
+            <!-- Button trigger modal -->
+            <button type="button" id="showStats" class="btn btn-info" data-toggle="modal" data-target="#statsModal">
+                <span class="glyphicon glyphicon-stats"></span> View statistics for this quiz.
+            </button>
+
+            <!-- Modal -->
+            <div class="modal fade" id="statsModal" tabindex="-1" role="dialog" aria-labelledby="statsModelLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="statsModalLabel">Statistics for {{ quiz_title }}</h4>
+                        </div>
+                        <div class="modal-body" id="statsModalBody">
+                            <p>Mean: {{mean|floatformat:"-2"}}</p>
+                            <p>Median: {{median|floatformat:"-2"}}</p>
+                            <p>Distribution:</p>
+                            <div id="modalChart"></div>
+                            <div class="form-group">
+                                <label for="sliderInput" class="control-label">Number of Bins</label>
+                                
+                                <input id="sliderInput" data-slider-id='slider' type="text" style="width: 100%"
+                                data-slider-min="1" data-slider-max="50" data-slider-step="1" 
+                                data-slider-value="10">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            </p>
             <table class="table" id="questions">
                 <thead>
                     <tr>
                         <th>Question</th>
-                        <th>Question Type</th>
                         <th>Score</th>
-                        <th>Max Score</th>
                         <th>Attempts Left</th>
                         <th>Attempt Question</th>
                         <th>Previous Attempts</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for question, instances in questions_and_instances %}
+                    {% for question in quiz.questions %}
                     <tr>
-                        <td>{{question.idx}}</td>
-                        <td>{{ question.q_type }}</td>
-                        <td>{{ question.score }}</td>
-                        <td>{{ question.max_score }}</td>
-                        <td>{{ question.max_attempts|subtract:question.attempts }}</td>
+                        <td>{{ question.title }}</td>
+                        <td>{{ question.questionScore }}/{{ question.maxScore }}</td>
+                        <td>{{ question.leftAttempts }}</td>
                         <td>
-                            {% if question.in_progress %}
-                            <a href="{% url 'quizzes.views.question' quiz.id question.idx question.attempts|add:"-1" %}"
-                                class="btn btn-primary">
-                                Go To Current Attempt
-                            </a>
-                            {% else %}
-                            {% if question.attempts == question.max_attempts %}
-                            <button class="btn btn-primary disabled">
-                                No Attempts Remaining
+                            {% if question.leftAttempts == 0 %}
+                            <button class="btn btn-primary btn-block disabled">
+                                No Attempts Left
                             </button>
                             {% else %}
-                            <a href="{% url 'quizzes.views.question' quiz.id question.idx question.attempts %}"
-                                class="btn btn-primary">
-                                {% if question.attempts == 0 %}
+                            <a href="{% url 'quizzes.views.question' course_id quiz.quizId question.questionIdx %}"
+                                class="btn btn-primary btn-block">
                                 Attempt Question
-                                {% else %}
-                                Try Again
-                                {% endif %}
                             </a>
-                            {% endif %}
                             {% endif %}
                         </td>
                         <td>
-                            {% if instances|length != 0 %}
+                            {% if question.attempts|length != 0 %}
                             <div class="dropdown">
-                                <button id="dLabel{{question.idx}}" type="button" data-toggle="dropdown" 
+                                <button id="dLabel{{question.questionIdx}}" type="button" data-toggle="dropdown" 
                                     aria-haspopup="true" aria-expanded="false" 
-                                    class="btn btn-default">
-                                    {% if instances|length != 1 %}
-                                    {{ instances|length }} Previous Attempts 
+                                    class="btn btn-default btn-block">
+                                    {% if question.attempts|length != 1 %}
+                                    {{ question.attempts|length }} Attempts 
                                     {% else %}
-                                    1 Previous Attempt    
+                                    1 Attempt    
                                     {% endif %}
                                     <span class="caret"></span>
                                 </button>
-                                {% if instances|length != 0 %}
-                                <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel{{question.idx}}">
-                                    {% for instance in instances %}
+                                {% if question.attempts|length != 0 %}
+                                <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel{{question.questionIdx}}">
+                                    {% for idx, score in question.attempts %}
                                     <li role="presentation">
-                                    <a role="menuitem" tabindex="-1" href="{% url "quizzes.views.question" quiz.id question.idx instance.idx %}">
-                                        {{instance.idx}}: score: {{instance.score}}
+                                    <a role="menuitem" tabindex="-1" href="{% url "quizzes.views.attempt" course_id quiz.quizId question.questionIdx idx%}">
+                                        Score: {{ score }}
                                     </a>
                                     </li> 
                                     {% endfor %}
@@ -88,7 +152,7 @@
                                 {% endif %}
                             </div>
                             {% else %}
-                            <button type="button" class="btn btn-default disabled">No Previous Attempts</button>
+                            <button type="button" class="btn btn-default btn-block disabled">No Attempts</button>
                             {% endif %}
                         </td>
                     </tr>

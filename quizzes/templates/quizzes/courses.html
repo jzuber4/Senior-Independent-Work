@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Your Courses{% endblock %} 
+
+{% block content %}
+{# if there are quizzes, display info about them all #}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <h1>Your Courses</h1>
+            {% if courses|length == 0 %}
+            <hr>
+            <h2>It appears you aren't in any courses.</h2>
+            {% else %}
+            {% for id, title in courses %}
+            <hr>
+            <h2><a href="{% url 'quizzes.views.course' id %}">{{ title }}</a></h2>
+            {% endfor %}
+            {% endif %}
+            <hr>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

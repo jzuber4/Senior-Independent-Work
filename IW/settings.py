@@ -130,6 +130,7 @@ if False:
         SECRET_KEY = f.read().strip()
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
+    QUIZ_SERVICE_DEBUG = False
     DEBUG = False
     ALLOWED_HOSTS = [
         '.princeton.edu'  # Allow princeton domain and subdomains

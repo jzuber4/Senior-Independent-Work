@@ -7,15 +7,17 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="{% url 'quizzes.views.quizzes' %}">IW Quiz Site</a>
+        <a class="navbar-brand" href="{% url 'quizzes.views.courses' %}">IW Quiz Site</a>
     </div>
     <div class="collapse navbar-collapse" id="navbar-collapse">
         <ul class="nav navbar-nav">
-            <li><a href="{% url 'quizzes.views.quizzes' %}">Quizzes</a></li>
-            {% if quiz %}
-            <li><a href="{% url 'quizzes.views.quiz' quiz.id %}">Quiz {{quiz.id}}</a></li>
-            {% if question %}
-            <li><a href="#">Question {{question.idx}}</a></li>
+            {% if course_id and course_title %}
+            <li><a href="{% url 'quizzes.views.course' course_id %}">{{ course_title }}</a></li>
+            {% if quiz_id and quiz_title %}
+            <li><a href="{% url 'quizzes.views.quiz' course_id quiz_id %}">{{ quiz_title }}</a></li>
+            {% if question_idx and title %}
+            <li><a href="{% url 'quizzes.views.question' course_id quiz_id question_idx %}">{{ title }}</a></li>
+            {% endif %}
             {% endif %}
             {% endif %}
         </ul>
