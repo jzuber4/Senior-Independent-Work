@@ -264,7 +264,7 @@ class @Tree
 
     # select nodes and redraw
     selectArray: (nodes) =>
-        @selectedNodes = nodes
+        @selectedNodes = _.map(nodes, (n) -> n)
         do @update
 
     # select node redraw

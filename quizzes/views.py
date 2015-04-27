@@ -88,8 +88,12 @@ def quiz(request, course_id, quiz_id):
     if created or quiz["quizTitle"] != quiz_model.title:
         quiz_model.title = quiz["quizTitle"]
         quiz_model.save()
+
     # load scores for quiz stats
     scores = qs.get_quiz_statistics(quiz['quizId'])
+    # fake scores:
+    #ms = quiz['maxScore']
+    #scores = filter(lambda s: 0 <= s <= ms, (gauss(ms * 3 / 5, ms / 5) for _ in range(1000)))
     d = {
         'course_id': course_id,
         'course_title': Course.objects.get(service_id=course_id).title,
@@ -112,6 +116,7 @@ def render_attempt_or_result(request, course_id, quiz_id, question_idx, info, co
     question_type = get_question_type(info)
 
     # set up context for template
+    print(info)
     d = {
         'answer':        info['answer'], #TODO: answer not in CHECKBOX attempts
         'correct':       float(info['userScore']) == float(info['maxScore']),

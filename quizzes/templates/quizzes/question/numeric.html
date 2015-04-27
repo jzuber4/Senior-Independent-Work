@@ -5,7 +5,7 @@
 {% block js %}
 {{ block.super }}
 {% compress js %}
-<script type="text/javascript" src="{% static "quizzes/scripts/inputValidator.js" %}"></script>
+<script type="text/javascript" src="{% static "quizzes/scripts/validator.js" %}"></script>
 <script type="text/javascript">
     $(function() {
         var valid = function(element) {
@@ -32,6 +32,7 @@
     <button type="submit" class="btn btn-primary">
         Submit
     </button>
+    <p>
 </form>
 {% endblock %}
 

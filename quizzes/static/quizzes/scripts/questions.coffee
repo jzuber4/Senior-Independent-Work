@@ -61,7 +61,6 @@ class @BSTSearchQuestion
             do @onChange
             true
         catch e
-            console.log e
             false
 
     submit: () =>
