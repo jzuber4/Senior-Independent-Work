@@ -1,38 +1,21 @@
 {% extends "quizzes/question/base.html" %}
 {% load compress %}
+{% load staticfiles %}
 
 {% block js %}
 {{ block.super }}
 {% compress js %}
+<script type="text/javascript" src="{% static "quizzes/scripts/inputValidator.js" %}"></script>
 <script type="text/javascript">
     $(function() {
-        var valid = function() {
-            answer = $("#answerInput").val();
+        var valid = function(element) {
+            answer = element.val();
             return !isNaN(answer) && $.trim(answer).length > 0;
         };
-
-        $("form").submit(function(e) {
-            canSubmit = valid();
-            if (!canSubmit) {
-                e.preventDefault();
-                $("#alertDiv").html([
-                    "<div class='alert alert-danger' role='alert'>",
-                    "   Input a valid number",
-                    "</div>"].join("\n"));
-            }
+        $("#answerInput").validator({
+            isValid: valid,
+            alertText: "Input must be a valid number"
         });
-
-        $("#answerInput").on('input', function() {
-            canSubmit = valid();
-            if (canSubmit) {
-                $("#alertDiv").html("");
-                $("#answerInput").parent().removeClass("has-error");
-            } else {
-                $("#answerInput").parent().addClass("has-error");
-            }
-        });
-        // starts out invalid
-        $("#answerInput").parent().addClass("has-error");
     });
 </script>
 {% endcompress %}
@@ -46,7 +29,6 @@
         <input name="answer" id="answerInput" type="text" class="form-control" placeholder="Answer" autocomplete="off">
     </div>
     <input name="question_type" type="hidden" value="{{question_type}}">
-    <div id="alertDiv"></div>
     <button type="submit" class="btn btn-primary">
         Submit
     </button>
