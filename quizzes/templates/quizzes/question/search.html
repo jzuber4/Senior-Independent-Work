@@ -8,29 +8,43 @@
 $ ->
     # clear preset value, question is likely new
     question = new BSTSearchQuestion("treeContainer", {{structure|safe}}) 
+
     # update input when question is changed 
     f = () ->
-        answers = question.submit().join ", "
-        $("#inputHuman").val(answers)
+        answers = question.submit().join " "
     question.change f
-    # update question when input is changed
-    $("#inputHuman").change () -> 
+
+    # function to check if input is valid
+    isValid = (elem) -> 
+        elem.val().length > 0 and _.every(elem.val().split(/(\s+)/), (v) -> not isNaN(v))
+
+    # update question on keyup and change, update input on input change 
+    updateQuestion = () ->
         success = question.update($("#inputHuman").val())
-        unless success
-            $("#inputHuman").val("")
+    $("#inputHuman").keyup (e) -> 
+        do updateQuestion if isValid $("#inputHuman") 
+    $("#inputHuman").change () ->
+        do updateQuestion
+        $("#inputHuman").val(question.submit().join " ")
 
     $("form").submit () -> 
         $("#inputAnswer").val(JSON.stringify(question.submit().join " "))
+
+    $("#inputHuman").validator
+        isValid: isValid
+        on: ["input", "change"]
+
+    return
        
 </script>
 {% endcompress %}
 {% endblock %}
 
 {% block qcontent %}
-<p>Click to select nodes, or type in a comma separated series of keys.</p>
 <form method="post" class="form" autocomplete="off">
     {% csrf_token %}
     <div class="form-group">
+        <label class="control-label" for="inputHuman">Click to select nodes, or type in a whitespace separated series of keys.</label>
         <input name="answer" type="text" class="form-control" id="inputHuman" placeholder="Answer" autocomplete="off">
     </div>
     <input name="answer" type="hidden" id="inputAnswer">

@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from models import Course, Quiz
 from quiz_service import service as qs
-from quiz_service.service import QuestionType, get_question_type
+from quiz_service.service import QuestionType, get_question_type, QuizStatus, get_quiz_status
 from time import strptime
 from random import gauss
 
@@ -70,10 +70,17 @@ def quiz(request, course_id, quiz_id):
     course_id = int(course_id)
     quiz_id   = int(quiz_id)
 
-    # tell the service that the user is starting this quiz
-    qs.select_quiz(request.user.username, quiz_id)
 
     quiz = qs.get_quiz_info(request.user.username, quiz_id)
+    print(quiz)
+    status = get_quiz_status(quiz)
+    if status == QuizStatus.NOT_STARTED:
+        # tell the service that the user is starting this quiz
+        # TODO: check return value
+        qs.select_quiz(request.user.username, quiz_id)
+
+
+
 
     # questions represented as json array of json encoded questions
     quiz['questions'] = [json.loads(q) for q in json.loads(quiz['questions'])]
@@ -81,7 +88,7 @@ def quiz(request, course_id, quiz_id):
     quiz['startDate'] = parse_datetime(quiz['startDate'])
     quiz['endDate'] = parse_datetime(quiz['endDate'])
     for q in quiz['questions']:
-        q['attempts'] = sorted(json.loads(q['attempts']).items())
+        q['attempts'] = [json.loads(a) for a in json.loads(q['attempts'])]
 
     # save title in db
     quiz_model, created = Quiz.objects.get_or_create(service_id=quiz_id)
@@ -116,9 +123,8 @@ def render_attempt_or_result(request, course_id, quiz_id, question_idx, info, co
     question_type = get_question_type(info)
 
     # set up context for template
-    print(info)
     d = {
-        'answer':        info['answer'], #TODO: answer not in CHECKBOX attempts
+        'answer':        info['answer'],
         'correct':       float(info['userScore']) == float(info['maxScore']),
         'course_id':     course_id,
         'course_title':  Course.objects.get(service_id=course_id).title,
@@ -194,6 +200,7 @@ def question(request, course_id, quiz_id, question_idx):
     if request.method == 'GET':
         # get the question and its type
         question = qs.get_exercise(request.user.username, quiz_id, question_idx)
+        print(question)
         question_type = get_question_type(question)
 
         # parse the question

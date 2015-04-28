@@ -47,7 +47,9 @@ class @BSTSearchQuestion
     update: (text) =>
         try
             # get list of selected names from text
-            names = _.map((text.split ","), (s) -> s.trim()).filter((s) -> s.length > 0)
+            console.log("inUpdate")
+            names = _.map((text.split /(\s+)/), (s) -> s.trim()).filter((s) -> s.length > 0 and !isNaN(s))
+            console.log("names")
 
             @answer = []
             @tree.each (node) =>
@@ -61,6 +63,7 @@ class @BSTSearchQuestion
             do @onChange
             true
         catch e
+            console.log e
             false
 
     submit: () =>
@@ -183,6 +186,9 @@ class @BSTInsertQuestion
 
     onChange: (f) =>
         @change = f
+
+    numLeft: () =>
+        @nums.length
 
     canUndo: () =>
         @inserts.length > 0

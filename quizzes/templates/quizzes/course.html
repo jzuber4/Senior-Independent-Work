@@ -35,7 +35,7 @@
                     <tr>
                         <td><a href="{% url 'quizzes.views.quiz' course_id quiz.quizId %}">{{ quiz.quizTitle }}</a></td>
                         <td>{{quiz.numQuestions}}</td>
-                        <td>{{quiz.quizScore}}/{{quiz.maxScore}}</td>
+                        <td>{{quiz.quizScore|floatformat:"-2"}}/{{quiz.maxScore|floatformat:"-2"}}</td>
                         <td>{{quiz.startDate}}</td>
                         <td>{{quiz.endDate}}</td>
                     </tr>

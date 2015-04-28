@@ -16,12 +16,12 @@
                 if (!canSubmit) {
                     e.preventDefault();
                     if (!$("#"+alertId).length) {
-                        $(form).after(alertDiv);
+                        element.closest('form').find(':submit').before(alertDiv);
                     }   
                 }
             });
 
-            element.on(opts.on, function() {
+            var update = function() {
                 canSubmit = opts.isValid(element);
                 if (canSubmit) {
                     $("#"+alertId).remove();
@@ -29,8 +29,19 @@
                 } else {
                     element.closest(".form-group").addClass("has-error");
                 }
-            });
-            element.closest(".form-group").addClass("has-error");
+            };
+            // apply event handler(s) to input
+            if (opts.on instanceof Array) {
+                $.each(opts.on, function(i, on) {
+                    element.on(on, update);
+                });
+            } else {
+                element.on(opts.on, update);
+            }
+            // apply initial styling
+            if (!opts.isValid(element)) {
+                element.closest(".form-group").addClass("has-error");
+            }
         });
     };
 

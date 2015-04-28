@@ -16,8 +16,8 @@
     $(function() {
         var scores = {{ scores|safe }},
             maxScore = {{ quiz.maxScore|safe }},
-            throttleRate = 100,
-            debounceRate = 300,
+            throttleMilliseconds = 100,
+            debounceMilliseconds = 300,
             numBins = 10;
 
         // create bar chart
@@ -44,8 +44,8 @@
             chart = chart.numBins(slider.slider('getValue'));
             selection.call(chart); 
         }
-        $("#sliderInput").change(_.throttle(drawChart, throttleRate)); 
-        $(window).on('resize',   _.debounce(drawChart, debounceRate)); 
+        $("#sliderInput").change(_.throttle(drawChart, throttleMilliseconds)); 
+        $(window).on('resize',   _.debounce(drawChart, debounceMilliseconds)); 
     });
 </script>
 {% endblock %}
@@ -55,14 +55,14 @@
     <div class="row">
         <div class="col-sm-12">
             <h2>{{ quiz.quizTitle }}</h2>
-            <p>This quiz starts on <strong>{{ quiz.startDate }}</strong> and ends on <strong>{{ quiz.startDate }}</strong></p>
+            <p>This quiz starts on <strong>{{ quiz.startDate }}</strong> and ends on <strong>{{ quiz.endDate }}</strong></p>
             {% if quiz.numQuestions == 1 %}
             There is only <strong>one question</strong> in this quiz.
             {% else %}
             There are <strong>{{quiz.numQuestions}} questions</strong> in this quiz.
             {% endif %}
             </p>
-            <p>You have <strong>{{ quiz.quizScore }} out of {{ quiz.maxScore }} points</strong>.</p>
+            <p>You have <strong>{{ quiz.quizScore|floatformat:"-2" }} out of {{ quiz.maxScore|floatformat:"-2" }} points</strong>.</p>
             <p>
             <!-- Button trigger modal -->
             <button type="button" id="showStats" class="btn btn-info" data-toggle="modal" data-target="#statsModal">
@@ -112,7 +112,7 @@
                     {% for question in quiz.questions %}
                     <tr>
                         <td>{{ question.title }}</td>
-                        <td>{{ question.questionScore }}/{{ question.maxScore }}</td>
+                        <td>{{ question.questionScore|floatformat:"-2" }}/{{ question.maxScore|floatformat:"-2" }}</td>
                         <td>{{ question.leftAttempts }}</td>
                         <td>
                             {% if question.leftAttempts == 0 %}
@@ -141,10 +141,11 @@
                                 </button>
                                 {% if question.attempts|length != 0 %}
                                 <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel{{question.questionIdx}}">
-                                    {% for idx, score in question.attempts %}
+                                    {% for attempt in question.attempts %}
                                     <li role="presentation">
-                                    <a role="menuitem" tabindex="-1" href="{% url "quizzes.views.attempt" course_id quiz.quizId question.questionIdx idx%}">
-                                        Score: {{ score }}
+                                    <a role="menuitem" tabindex="-1" 
+                                        href="{% url "quizzes.views.attempt" course_id quiz.quizId question.questionIdx attempt.attemptIdx%}">
+                                        Score: {{ attempt.userScore|floatformat:"-2" }}
                                     </a>
                                     </li> 
                                     {% endfor %}

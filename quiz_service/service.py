@@ -72,15 +72,28 @@ def get_question_types():
 def get_grading_types():
     return ["best", "average"]
 
+class QuizStatus:
+    STARTED     = "QUIZ_STATUS_STARTED"
+    NOT_STARTED = "QUIZ_STATUS_NOT_STARTED"
+    OTHER       = "QUIZ_STATUS_OTHER"
+
+def get_quiz_status(quiz):
+    if   quiz["status"] == "STARTED":
+        return QuizStatus.STARTED
+    elif quiz["status"] == "NOT_STARTED":
+        return QuizStatus.NOT_STARTED
+    else:
+        return QuizStatus.OTHER
+
 class QuestionType:
-    BST_INSERT   = "Q_TYPE_BST_INSERT"
-    BST_SEARCH   = "Q_TYPE_BST_SEARCH"
-    CHECKBOX     = "Q_TYPE_CHECKBOX"
-    MATCHING     = "Q_TYPE_MATCHING"
-    NUMERIC      = "Q_TYPE_NUMERIC"
-    RADIO        = "Q_TYPE_RADIO"
-    SHORT_ANSWER = "Q_TYPE_SHORT_ANSWER"
-    OTHER        = "Q_TYPE_OTHER"
+    BST_INSERT   = "QUESTION_TYPE_BST_INSERT"
+    BST_SEARCH   = "QUESTION_TYPE_BST_SEARCH"
+    CHECKBOX     = "QUESTION_TYPE_CHECKBOX"
+    MATCHING     = "QUESTION_TYPE_MATCHING"
+    NUMERIC      = "QUESTION_TYPE_NUMERIC"
+    RADIO        = "QUESTION_TYPE_RADIO"
+    SHORT_ANSWER = "QUESTION_TYPE_SHORT_ANSWER"
+    OTHER        = "QUESTION_TYPE_OTHER"
 
 def get_question_type(question):
     if question["type"] == "SHORTANSWER":
@@ -101,6 +114,9 @@ def get_question_type(question):
         return QuestionType.RADIO
     elif question["type"] == "REGEXP":
         # handle regexp questions the same as short answer
+        return QuestionType.SHORT_ANSWER
+    elif question["type"] == "VECTOR":
+        # handle vector questions the same as short answer
         return QuestionType.SHORT_ANSWER
     else:
         return QuestionType.OTHER

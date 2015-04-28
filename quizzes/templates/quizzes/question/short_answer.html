@@ -1,11 +1,9 @@
 {% extends "quizzes/question/base.html" %}
 {% load compress %}
-{% load staticfiles %}
 
 {% block js %}
 {{ block.super }}
 {% compress js %}
-<script type="text/javascript" src="{% static "quizzes/scripts/validator.js" %}"></script>
 <script type="text/javascript">
     $(function() {
         $("#answerInput").validator({alertText: "Please type in an answer"});
@@ -24,7 +22,6 @@
     <button type="submit" class="btn btn-primary">
         Submit
     </button>
-    <p>
 </form>
 {% endblock %}
 
