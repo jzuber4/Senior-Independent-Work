@@ -39,6 +39,7 @@ class @BSTSearchQuestion
 
         @tree.nodeOnClick onClick
 
+    # set the change callback to f
     change: (f) ->
         @onChange = f
 
@@ -60,17 +61,18 @@ class @BSTSearchQuestion
                         names.splice index, 1
 
             @tree.selectArray @answer
-            do @onChange
             true
         catch e
             console.log e
             false
 
+    # get the value to submit to the server
     submit: () =>
         _.map @answer, (node) -> node.name
 
+# make a BST Insert question with data in the div specified by divId
+# set the change callback to onChange (default is noop function)
 class @BSTInsertQuestion
-
     constructor: (divId, @data, @change = (() -> )) ->
 
         # dimensions and setup for making display of numbers
@@ -116,6 +118,7 @@ class @BSTInsertQuestion
 
         @tree.nodeOnClick onClick
 
+    # update the representation to display the new set of numbers to be inserted
     update: (data) =>
 
         data = data.slice()
@@ -184,15 +187,19 @@ class @BSTInsertQuestion
         nodeExit.select("text")
             .style("fill-opacity", 1e-6)
 
+    # set the change callback to f
     onChange: (f) =>
         @change = f
 
+    # get the number of elements left to insert
     numLeft: () =>
         @nums.length
 
+    # can an insertion be undone?
     canUndo: () =>
         @inserts.length > 0
 
+    # undo the last insertion
     undo: () =>
         if @canUndo()
             d = @inserts.pop()
@@ -200,7 +207,7 @@ class @BSTInsertQuestion
             @nums.unshift d.name
             @update @nums
 
-
+    # get the value to submit to the server
     submit: () =>
         @tree.toSerializable()
 

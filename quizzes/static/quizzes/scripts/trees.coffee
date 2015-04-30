@@ -25,8 +25,13 @@ class @Tree
         @selectedNodes = []
         @i = 0 # needed to give each datum a unique id, this is needed for the tree layout
 
-        # runs when a node is clicked
-        @nodeClick = options.nodeClick ? (() ->)
+        # runs when a node is clicked - default selects/deselects a node
+        @nodeClick = options.nodeClick ? ((d) ->
+            if (@selectedNodes.indexOf d) == -1
+                @select d
+            else
+                @deselect d
+        )
         # used to add additional classes to a node
         @nodeClass = options.nodeClass ? null
         # the duration of animation in milliseconds
@@ -109,39 +114,30 @@ class @Tree
         # adjust the tree to fit
         maxdepth = d3.max(nodes, (n) -> n.depth)
 
-        # update the nodes data and click function
+        # function to set the class for a node
+        nodeClassFunction = (d, i) =>
+            # default classes include node, selected, and leaf
+            # other classes can be added with nodeClass function
+            classes = "node "
+            if (@selectedNodes.indexOf d) != -1
+                classes += "selected "
+            if not d.children? or d.children.length == 0
+                classes += "leaf "
+            if @nodeClass?
+                classes += @nodeClass d, i
+            classes
+
+        # apply data update the nodes data and click function
         node = @svg.selectAll("g.node")
             .data(nodes, (d) => (d.id || d.id = ++@i)) # assign a unique id, needed for tree layout
             .on("click", @nodeClick)
-            .attr("class", (d, i) =>
-                # default classes include node, selected, and leaf
-                # other classes can be added with nodeClass function
-                classes = "node "
-                if (@selectedNodes.indexOf d) != -1
-                    classes += "selected "
-                if not d.children? or d.children.length == 0
-                    classes += "leaf "
-                if @nodeClass?
-                    classes += @nodeClass d, i
-                classes
-            )
+            .attr("class", nodeClassFunction)
 
         # Enter any new nodes at the parent's previous position
         nodeEnter = node.enter().append("g")
             .attr("transform", (d) => "translate(#{d.x},#{d.y})")
             .on("click", @nodeClick)
-            .attr("class", (d, i) =>
-                # default classes include node, selected, and leaf
-                # other classes can be added with nodeClass function
-                classes = "node "
-                if (@selectedNodes.indexOf d) != -1
-                    classes += "selected "
-                if not d.children? or d.children.length == 0
-                    classes += "leaf "
-                if @nodeClass?
-                    classes += @nodeClass d, i
-                classes
-            )
+            .attr("class", nodeClassFunction)
 
         nodeEnter.append("circle")
             .attr("r", 1e-6)
@@ -315,11 +311,13 @@ class @BinaryTree extends Tree
         # validate as binary tree
         assertValid data
 
+    # Set the name of the node and set its children to two leaf nodes
     insert: (node, name) =>
         node.name = name
         node.children = [{name:"",parent:node,children:[]},{name:"",parent:node,children:[]}]
         do @update
 
+    # remove the subtree at that node and replace it with a leaf node
     remove: (node) =>
         emptyNode = {name:"", parent:node.parent, children:[]}
         index = node.parent.children.indexOf node

@@ -46,10 +46,16 @@
     };
 
     $.fn.validator.defaults = {
+            // function to determine if input is valid
             isValid: function(element) { return $.trim(element.val()).length > 0;}, // non whitespace
+            // element to be displayed on alert (attempted submit)
             alertDiv: $("<div class='alert alert-danger' role='alert'></div>"), 
+            // text to be displayed in alert
             alertText: "Input invalid", 
+            // alert div id suffix
             alertId: "-validatorAlert",
+            // event(s) that the validator listens for, can be array:
+            // e.g. ["change", "keyUp"]
             on: "input"
     };
 

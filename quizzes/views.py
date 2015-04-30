@@ -92,21 +92,21 @@ def quiz(request, course_id, quiz_id):
 
     # save title in db
     quiz_model, created = Quiz.objects.get_or_create(service_id=quiz_id)
-    if created or quiz["quizTitle"] != quiz_model.title:
-        quiz_model.title = quiz["quizTitle"]
+    if created or quiz["title"] != quiz_model.title:
+        quiz_model.title = quiz["title"]
         quiz_model.save()
 
     # load scores for quiz stats
     scores = qs.get_quiz_statistics(quiz['quizId'])
     # fake scores:
     #ms = quiz['maxScore']
-    #scores = filter(lambda s: 0 <= s <= ms, (gauss(ms * 3 / 5, ms / 5) for _ in range(1000)))
+    #scores = filter(lambda s: 0 <= s <= ms, (gauss(ms * 3 / 5, ms / 5) for _ in range(100)))
     d = {
         'course_id': course_id,
         'course_title': Course.objects.get(service_id=course_id).title,
         'quiz': quiz,
         'quiz_id': quiz['quizId'],
-        'quiz_title': quiz['quizTitle'],
+        'quiz_title': quiz['title'],
         'scores': json.dumps(scores),
     }
     d['mean'] = sum(scores) / len(scores)
@@ -200,7 +200,6 @@ def question(request, course_id, quiz_id, question_idx):
     if request.method == 'GET':
         # get the question and its type
         question = qs.get_exercise(request.user.username, quiz_id, question_idx)
-        print(question)
         question_type = get_question_type(question)
 
         # parse the question
