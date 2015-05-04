@@ -1,21 +1,25 @@
+from __future__ import print_function
 import json
+from datetime import timedelta
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import Http404, HttpResponse
-from django.shortcuts import  get_object_or_404, redirect, render
-from django.utils import timezone
+from django.shortcuts import redirect, render
 from django.utils.dateparse import parse_datetime
-from models import Course, Quiz
 from quiz_service import service as qs
+from quiz_service.models import Course, Quiz
 from quiz_service.service import QuestionType, get_question_type, QuizStatus, get_quiz_status
-from time import strptime
+from quiz_service.service import ResultStatus, get_result_status
+from quiz_service.service import NotFound, NoAttemptsLeft
 from random import gauss
+from time import strptime
 
 # Create your views here.
 # starting page
 @login_required
-def courses(request):
+def index(request):
     courses = qs.get_user_courses(request.user.username)
-    courses = sorted(courses.items())
+    courses = sorted(courses.items(), key=lambda c: int(c[0]))
     d = {
         'courses': courses,
     }
@@ -29,7 +33,7 @@ def courses(request):
     if len(courses) == 1:
         course_id, _ = courses[0]
         return redirect('quizzes.views.course', course_id)
-    return render(request, 'quizzes/courses.html', d)
+    return render(request, 'quizzes/index.html', d)
 
 @login_required
 def course(request, course_id):
@@ -38,7 +42,13 @@ def course(request, course_id):
     # parse quizzes
     quizzes = []
     # quizzes come in id, json pairs
-    for quiz_id, rest in sorted(qs.get_course_quizzes(request.user.username, course_id).items()):
+    try:
+        course_quizzes = qs.get_course_quizzes(request.user.username, course_id)
+    except NotFound:
+        messages.error(request, 'Course {} not found'.format(course_id))
+        return redirect('quizzes.views.index')
+
+    for quiz_id, rest in sorted(course_quizzes.items(), key=lambda q: int(q[0])):
         # decode the json into a dictionary
         quiz = json.loads(rest)
         # add the id back into the quiz
@@ -48,12 +58,29 @@ def course(request, course_id):
         # precalculate the max score, it is not part of the quiz
         quiz['maxScore'] = sum(q['maxScore'] for q in quiz['questions'])
         quiz['startDate'] = parse_datetime(quiz['startDate'])
+        quiz['softEndDate'] = parse_datetime(quiz['softEndDate'])
         quiz['endDate'] = parse_datetime(quiz['endDate'])
+        quiz['timeLeft'] = timedelta(milliseconds=quiz['quizMaxMilliseconds'])
+        quiz['is_timed'] = int(quiz['quizMaxMilliseconds']) > 0
+        status = get_quiz_status(quiz)
+        if   status == QuizStatus.BEFORE_START_DATE:
+            quiz['status_text'] = "Not yet available"
+        elif status == QuizStatus.NOT_STARTED:
+            quiz['status_text'] = "Not started"
+            quiz['not_started'] = True
+        elif status == QuizStatus.STARTED:
+            quiz['status_text'] = "In progress"
+        elif status == QuizStatus.OVER:
+            quiz['status_text'] = "Past due date"
+        elif status == QuizStatus.EXPIRED:
+            quiz['status_text'] = "Time up"
+        elif status == QuizStatus.AFTER_END_DATE:
+            quiz['status_text'] = "No longer available"
         quizzes.append(quiz)
         # save the title in the db
         quiz_model, created = Quiz.objects.get_or_create(service_id=quiz_id)
-        if created or quiz["quizTitle"] != quiz_model.title:
-            quiz_model.title = quiz["quizTitle"]
+        if created or quiz['title'] != quiz_model.title:
+            quiz_model.title = quiz['title']
             quiz_model.save()
 
     d = {
@@ -71,29 +98,46 @@ def quiz(request, course_id, quiz_id):
     quiz_id   = int(quiz_id)
 
 
-    quiz = qs.get_quiz_info(request.user.username, quiz_id)
-    print(quiz)
+    grading_types_and_titles = qs.get_grading_types()
+    try:
+        quiz = qs.get_quiz_info(request.user.username, quiz_id)
+    except NotFound:
+        messages.error(request, 'Quiz {} not found'.format(quiz_id))
+        return redirect('quizzes.views.course', course_id)
     status = get_quiz_status(quiz)
-    if status == QuizStatus.NOT_STARTED:
+    # NOT_STARTED means the user has not selected it and its before the due date
+    # OVER means the user has not selected it and its past the due date
+    if status == QuizStatus.NOT_STARTED or status == QuizStatus.OVER:
         # tell the service that the user is starting this quiz
-        # TODO: check return value
         qs.select_quiz(request.user.username, quiz_id)
+        if status == QuizStatus.NOT_STARTED:
+            # get the quiz info again for timing purposes
+            quiz = qs.get_quiz_info(request.user.username, quiz_id)
+            status = get_quiz_status(quiz)
 
-
-
+    if status == QuizStatus.BEFORE_START_DATE:
+        messages.error(request, 'Quiz {} is not yet available.'.format(quiz_id))
+        return redirect('quizzes.views.course', course_id)
+    elif status == QuizStatus.AFTER_END_DATE:
+        messages.error(request, 'Quiz {} is no longer available.'.format(quiz_id))
+        return redirect('quizzes.views.course', course_id)
 
     # questions represented as json array of json encoded questions
     quiz['questions'] = [json.loads(q) for q in json.loads(quiz['questions'])]
     quiz['maxScore'] = sum(q['maxScore'] for q in quiz['questions'])
     quiz['startDate'] = parse_datetime(quiz['startDate'])
+    quiz['softEndDate'] = parse_datetime(quiz['softEndDate'])
     quiz['endDate'] = parse_datetime(quiz['endDate'])
     for q in quiz['questions']:
         q['attempts'] = [json.loads(a) for a in json.loads(q['attempts'])]
+        q['timeLimit'] = str(timedelta(milliseconds=q['maxMilliseconds']))
+        q['grading'] = grading_types_and_titles[q['grading']]
+    has_question_time_limits = any(int(question['maxMilliseconds']) > 0 for question in quiz['questions'])
 
     # save title in db
     quiz_model, created = Quiz.objects.get_or_create(service_id=quiz_id)
-    if created or quiz["title"] != quiz_model.title:
-        quiz_model.title = quiz["title"]
+    if created or quiz['title'] != quiz_model.title:
+        quiz_model.title = quiz['title']
         quiz_model.save()
 
     # load scores for quiz stats
@@ -108,6 +152,7 @@ def quiz(request, course_id, quiz_id):
         'quiz_id': quiz['quizId'],
         'quiz_title': quiz['title'],
         'scores': json.dumps(scores),
+        'has_question_time_limits': has_question_time_limits,
     }
     d['mean'] = sum(scores) / len(scores)
     if len(scores) % 2 == 0:
@@ -115,6 +160,13 @@ def quiz(request, course_id, quiz_id):
         d['median'] = (scores[len(scores) / 2 - 1] + scores[len(scores) / 2]) / 2.0
     else:
         d['median'] = sorted(scores)[len(scores) / 2]
+    # add a message for the status of the quiz
+    if   status == QuizStatus.STARTED:
+        d['status_text'] = 'This quiz is in progress.'
+    elif status == QuizStatus.OVER:
+        d['status_text'] = 'It is past the due date.'
+    elif status == QuizStatus.EXPIRED:
+        d['status_text'] = 'You have passed the time limit for this quiz.'
 
     return render (request, 'quizzes/quiz.html', d)
 
@@ -125,6 +177,7 @@ def render_attempt_or_result(request, course_id, quiz_id, question_idx, info, co
     # set up context for template
     d = {
         'answer':        info['answer'],
+        'attempts_left': info['leftAttempts'],
         'correct':       float(info['userScore']) == float(info['maxScore']),
         'course_id':     course_id,
         'course_title':  Course.objects.get(service_id=course_id).title,
@@ -135,10 +188,12 @@ def render_attempt_or_result(request, course_id, quiz_id, question_idx, info, co
         'quiz_title':    Quiz.objects.get(service_id=quiz_id).title,
         'score':         info['userScore'],
         'seed':          info['seed'],
+        'timed_out':     get_result_status(info) == ResultStatus.TIMED_OUT,
         'title':         info['title'],
         'user_answer':   info['userAnswer'],
-        'attempts_left': info['leftAttempts'],
     }
+
+
     if 'explanation' in info:
         d['explanation'] = info['explanation']
     if question_type == QuestionType.BST_INSERT:
@@ -168,7 +223,7 @@ def render_attempt_or_result(request, course_id, quiz_id, question_idx, info, co
     elif question_type == QuestionType.RADIO:
         d['statements']  = info['statements']
         d['answer']      = int(info['answer'])
-        d['user_answer'] = int(info['userAnswer'])
+        d['user_answer'] = int(info['userAnswer']) if info['userAnswer'] else None
 
     # add extra context
     d.update(context)
@@ -199,22 +254,33 @@ def question(request, course_id, quiz_id, question_idx):
     # connect to SOAP service
     if request.method == 'GET':
         # get the question and its type
-        question = qs.get_exercise(request.user.username, quiz_id, question_idx)
+        try:
+            question = qs.get_exercise(request.user.username, quiz_id, question_idx)
+        except NotFound:
+            messages.error(request, 'Question {} not found.'.format(question_idx))
+            return redirect('quizzes.views.quiz', course_id, quiz_id)
+        except NoAttemptsLeft:
+            messages.error(request, 'No attempts left for question {}.'.format(question_idx))
+            return redirect('quizzes.views.quiz', course_id, quiz_id)
         question_type = get_question_type(question)
 
         # parse the question
         # set up context for template
         d = {
-            'course_id':     course_id,
-            'course_title':  Course.objects.get(service_id=course_id).title,
-            'quiz_id':       quiz_id,
-            'quiz_title':    Quiz.objects.get(service_id=quiz_id).title,
-            'question_idx':  question_idx,
-            'question_type': question_type,
-            'prompt':        question['prompt'],
-            'seed':          question['seed'],
-            'title':         question['title'],
+            'course_id':        course_id,
+            'course_title':     Course.objects.get(service_id=course_id).title,
+            'prompt':           question['prompt'],
+            'quiz_id':          quiz_id,
+            'quiz_title':       Quiz.objects.get(service_id=quiz_id).title,
+            'question_idx':     question_idx,
+            'question_type':    question_type,
+            'seed':             question['seed'],
+            'title':            question['title'],
         }
+        # if question is being timed
+        if 'leftMilliseconds' in question:
+            d['leftMilliseconds'] = question['leftMilliseconds']
+
         if question_type == QuestionType.BST_INSERT:
             d['promptPretty'] = question['promptPretty']
             # need array of elements to insert, given whitespace separated string
@@ -255,15 +321,23 @@ def question(request, course_id, quiz_id, question_idx):
 
         # read in the answer
         user_answer = request.POST.get('answer')
-        if (len(user_answer) == 0):
+        if not user_answer:
+            messages.info(request, 'Please input an answer.')
             return redirect('quizzes.views.question', course_id, quiz_id, question_idx)
         if question_type == QuestionType.BST_SEARCH:
             user_answer = json.loads(user_answer)
         elif question_type == QuestionType.CHECKBOX or question_type == QuestionType.MATCHING:
-            user_answer = " ".join(request.POST.getlist('answer'))
+            user_answer = ' '.join(request.POST.getlist('answer'))
 
         # submit the answer and get the result
-        result = qs.get_result(request.user.username, quiz_id, question_idx, user_answer)
+        try:
+            result = qs.get_result(request.user.username, quiz_id, question_idx, user_answer)
+        except NotFound:
+            messages.error(request, 'Question {} not found.'.format(question_idx))
+            return redirect('quizzes.views.quiz', course_id, quiz_id)
+        except NoAttemptsLeft:
+            messages.error(request, 'No attempts left for question {}.'.format(question_idx))
+            return redirect('quizzes.views.quiz', course_id, quiz_id)
 
         # render the correct page for this result
         return render_attempt_or_result(request, course_id, quiz_id, question_idx, result)
@@ -276,7 +350,11 @@ def attempt(request, course_id, quiz_id, question_idx, attempt_idx):
     attempt_idx  = int(attempt_idx)
 
     # format attempt, place question and answers info in it
-    attempt = qs.get_attempt_info(request.user.username, quiz_id, question_idx, attempt_idx)
+    try:
+        attempt = qs.get_attempt_info(request.user.username, quiz_id, question_idx, attempt_idx)
+    except NotFound:
+        messages.error(request, 'Attempt {} for question {} not found.'.format(attempt_idx, question_idx))
+        return redirect('quizzes.views.quiz', course_id, quiz_id)
     attempt.update(json.loads(attempt['questionJSON']))
     attempt.update(json.loads(attempt['answersJSON']))
     del attempt['questionJSON']
@@ -291,20 +369,3 @@ def attempt(request, course_id, quiz_id, question_idx, attempt_idx):
 
     # render the appropriate page for this attempt
     return render_attempt_or_result(request, course_id, quiz_id, question_idx, attempt, context)
-
-
-@login_required
-@user_passes_test(lambda u: u.userinfo.is_teacher)
-def create_quiz(request):
-    if request.method == 'GET':
-        question_types_and_titles = qs.get_question_types()
-        question_types = [t[0] for t in question_types_and_titles]
-        question_titles = [t[1] for t in question_types_and_titles]
-        d = {
-            'question_titles': json.dumps(question_titles),
-            'question_types': json.dumps(question_types),
-            'grading_types': qs.get_grading_types(),
-        }
-        return render(request, 'quizzes/create_quiz.html', d)
-    else:
-        pass

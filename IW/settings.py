@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'bootstrap3',
     'compressor',
     # my app(s)
+    'teacher',
     'quizzes',
     'quiz_service',
 )
@@ -96,7 +97,11 @@ CAS_RESPONSE_CALLBACKS = (
 
 # soap url for quiz service
 QUIZ_SERVICE_URL = 'http://10.8.241.134:8080/Initial/services/Main?wsdl'
-QUIZ_SERVICE_DEBUG = True
+# This flag specifies whether quiz_service should be put in debug mode
+# in debug mode, the service catches errors that occur with the SOAP
+# service (for instance, if it cannot be reached over the network)
+# and returns fake data for the request
+QUIZ_SERVICE_DEBUG = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -113,7 +118,7 @@ STATICFILES_DIRS = (
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    # other finders..
+    # Compressor is the coffeescript preprocessor / javascript minifier
     'compressor.finders.CompressorFinder',
 )
 # add precompilers for coffeescript, etc.
@@ -126,10 +131,14 @@ TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
 
 # Deployment
 if False:
+    # NOTE: must have a secret key in the directory of
+    # this project in order to deploy
     with open('secret_key.txt') as f:
         SECRET_KEY = f.read().strip()
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
+    # Don't want to catch errors in the quiz service
+    # in production
     QUIZ_SERVICE_DEBUG = False
     DEBUG = False
     ALLOWED_HOSTS = [

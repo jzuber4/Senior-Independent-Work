@@ -9,7 +9,20 @@
 {% compress js %}
 <script type="text/coffeescript" charset="utf-8" src="{% static "quizzes/scripts/trees.coffee" %}"></script>
 <script type="text/coffeescript" charset="utf-8" src="{% static "quizzes/scripts/questions.coffee" %}"></script>
-<script type="text/javascript"   charset="utf-8" src="{% static "quizzes/scripts/validator.js" %}"></script>
+<script type="text/javascript"   charset="utf-8" src="{% static "scripts/jquery.countdown.min.js" %}"></script>
+<script type="text/javascript"   charset="utf-8" src="{% static "scripts/validator.js" %}"></script>
+<script type="text/javascript">
+    $(function() {
+        $(".countdown").each(function() {
+            var date = Date.now() + (+$(this).text());
+            $(this).countdown(date, function(event) {
+                $(this).text(
+                    event.strftime('%H:%M:%S') 
+                );
+            });
+        });
+    });
+</script>
 {% endcompress %}
 {% endblock %}
 
@@ -26,6 +39,9 @@
             {% endif %}
             {% endblock %}
             <p>Seed: {{seed}}</p>
+            {% if leftMilliseconds %}
+            <p>Time Left: <span class="countdown">{{ leftMilliseconds }}</span></p>
+            {% endif %}
             {% block qcontent %}
             {% endblock %}
         </div>

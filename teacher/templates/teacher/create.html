@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+{% load compress %}
+{% load staticfiles %}
+
+{% block title %}{{ page_title }}{% endblock %} 
+
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static "css/jquery.datetimepicker.css" %}" />
+{% endblock %}
+
+{% block js %}
+{{ block.super }}
+{% compress js %}
+<script type="text/javascript" src="{% static "scripts/validator.js" %}"></script>
+<script type="text/javascript" src="{% static "scripts/jquery.datetimepicker.js" %}"></script>
+<script type="text/javascript">
+    $(function() {
+        // read in question types and titles
+        var questions = {{questions|safe }};
+        var question_types = {{ question_types|safe }};
+        var question_titles = {{ question_titles|safe }};
+        var question_type_options = _.map(question_types, function(t) { return "<option>"+t+"</option>"}).join("\n");
+
+        // initialize datetimepickers
+        var defaults = {
+            startDate:   new Date(),
+            defaultDate: new Date()
+        };
+        $("#startDate").datetimepicker(defaults);
+        $("#softEndDate").datetimepicker(defaults);
+        $("#endDate").datetimepicker(defaults);
+
+        // give hints for fields that need to be filled
+        $("#title").validator({alertText: "Must supply a title"});
+        $("#startDate").validator({on: "change", alertText: "Must supply a start."});
+        $("#softEndDate").validator({on: "change", alertText: "Must supply a due date."});
+        $("#endDate").validator({on: "change", alertText: "Must supply an end date."});
+
+        // make checkboxes toggle their attached inputs
+        $("#timeLimitEnabled").change(function() {
+            var readonly = !$(this).is(':checked');
+            $("#timeLimit").prop('readonly', readonly);
+        });
+        $("#perQuestionTimeLimitEnabled").change(function() {
+            var readonly = !$(this).is(':checked');
+            $("#perQuestionTimeLimit").prop('readonly', readonly);
+        });
+
+        // construct templates for adding new questions
+        var label       = _.template("<label name='<%= name %>' for='<%= id %>'><%= text %></label>");
+        var textInput   = _.template("<input name='<%= name %>' class='form-control' id='<%= id %>' type='text' value='<%= value %>'>");
+        var numberInput = _.template("<input name='<%= name %>' class='form-control' id='<%= id %>' type='number' min='1' value='<%= value %>'>");
+        var selectInput = _.template("<select name='<%= name %>' class='form-control' id='<%= id %>' ><%= options %></select>");
+        var buttonTemplate = _.template("<button class='btn btn-default' id='<%= id %>' type='button'><%= text %></button>");
+        var checkboxAddon = _.template([
+            "<span class='input-group-addon'>",
+            "   <input name='<%= name %>' type='checkbox' id='<%= id %>' ariaLabel='<%= ariaLabel %>' <%= checked %>>",
+            "</span>"
+        ].join('\n'));
+        var inputGroup = _.template([
+            "<div class='input-group'>", 
+            "   <%= contents %>",
+            "</div>"
+        ].join('\n'));
+        var formCol = _.template([
+            "<div class='col-md-<%= n %> form-group'>",
+            "   <%= contents %>",
+            "</div>"
+        ].join('\n'));
+        var row = _.template([
+            "<div class='row'>",
+            "   <%= contents %>",
+            "</div>"
+        ].join('\n'));
+
+        // counter for unique question ids 
+        var n = 0;
+
+        // default values for addQuestion
+        var addQuestionDefaults = {
+            title: question_titles[0],
+            type: question_types[0],
+            timeLimit: $("#perQuestionTimeLimit").val(),
+            checked: $("#perQuestionTimeLimitEnabled").is(":checked") ? "checked='checked'" : "",
+            numAttempts: $("#perQuestionNumAttempts").val(),
+            maxScore: $("#perQuestionMaxScore").val(),
+            gradingType: $("#perQuestionGradingType").val()
+        };
+
+        // on click, add a question to the form
+        var addQuestion = function(opts) {
+
+            // read in options
+            var values = $.extend({}, addQuestionDefaults, opts);
+
+            n += 1;
+            var id = _.template("<%= text %>"+n);
+
+            // construct the ids
+            var questionId  = id({text: "q"});
+            var titleId     = id({text: "qTitle"});
+            var typeId      = id({text: "qType"});
+            var timeLimitId = id({text: "qTimeLimit"});
+            var timeLimitCheckboxId = id({text: "qTimeLimitEnabled"});
+            var attemptsId  = id({text: "qAttempts"});
+            var scoreId     = id({text: "qScore"});
+            var gradingId   = id({text: "qGrading"});
+            
+            // construct the labels
+            var titleLabel     = label({id: titleId, text: "Question title"});
+            var typeLabel      = label({id: typeId, text: "Type"});
+            var timeLimitLabel = label({id: timeLimitId, text: "Time limit in minutes"});
+            var attemptsLabel  = label({id: attemptsId, text: "Number of attempts"});
+            var scoreLabel     = label({id: scoreId, text: "Max score"});
+            var gradingLabel   = label({id: gradingId, text: "Grading strategy"});
+
+            // construct the inputs
+            var titleInput = textInput({
+                name: "questionTitle", 
+                id: titleId,
+                value: values.title
+            });
+            var typeInput = selectInput({
+                name: "questionType", 
+                id: typeId, 
+                options: question_type_options
+            });
+            var timeLimitInput = numberInput({
+                name: "questionTimeLimit", 
+                id: timeLimitId, 
+                value: values.timeLimit 
+            });
+            var timeLimitCheckbox = checkboxAddon({
+                name: "questionTimeLimitEnabled",
+                id: timeLimitCheckboxId, 
+                ariaLabel: "Enable time limit", 
+                checked: values.checked
+            });
+            var timeInputGroup = inputGroup({
+                contents: timeLimitCheckbox + timeLimitInput
+            });
+            var attemptsInput = numberInput({
+                name: "questionNumAttempts",
+                id: attemptsId, 
+                value: values.numAttempts
+            });
+            var scoreInput = numberInput({
+                name: "questionMaxScore",
+                id: scoreId, 
+                value: values.maxScore
+            });
+            var gradingInput = selectInput({
+                name: "questionGradingType",
+                id: gradingId, 
+                options: $("#perQuestionGradingType").clone().html()
+            });
+
+            // construct the columns
+            var title     = formCol({n: 4, contents: titleLabel + titleInput}); 
+            var type      = formCol({n: 4, contents: typeLabel + typeInput});
+            var timeLimit = formCol({n: 4, contents: timeLimitLabel + timeInputGroup});
+            var attempts  = formCol({n: 4, contents: attemptsLabel + attemptsInput});
+            var score     = formCol({n: 4, contents: scoreLabel + scoreInput});
+            var grading   = formCol({n: 4, contents: gradingLabel + gradingInput});
+
+            // create the button
+            var buttonId = id({text: "removeButton"});
+            var button   = buttonTemplate({id: buttonId, text: "Remove"});
+
+            // construct the rows
+            numQuestions = $(".question").length
+            var nameRow   = row({contents: "<h3 class='question-title'>Question "+(numQuestions + 1)+"</h3>"});
+            var row1      = row({contents: title + type + timeLimit});
+            var row2      = row({contents: attempts + grading + score});
+            var question  = "<div class='question' id='"+questionId+"'><hr>"+nameRow+row1+row2+button+"</div>";
+
+            // add question to page
+            $("form").append(question);
+            $("#numQuestions").val(parseInt($("#numQuestions").val()) + 1);
+
+            // set starting grading type
+            $("#"+gradingId).val(values.gradingType);
+
+            // attach type to title
+            // set starting type
+            $("#"+typeId).val(values.type);
+            $("#"+typeId).change(function() {
+                val = $(this).val();
+                index = question_types.indexOf(val);
+                $("#"+titleId).val(question_titles[index]);
+            });
+
+            // Connect checkbox and time limit 
+            checkboxChange = function() {
+                var readonly = !$("#"+timeLimitCheckboxId).is(':checked');
+                $("#"+timeLimitId).prop('readonly', readonly);
+            };
+            checkboxChange();
+            $("#"+timeLimitCheckboxId).change(checkboxChange);
+
+            // Make remove button functional 
+            $("#"+buttonId).click(function(){
+                $("#"+questionId).remove();
+                $("#numQuestions").val($(".question").length);
+                $(".question-title").each(function(i) {
+                    $(this).text("Question " + (i+1));
+                });
+            });
+        };
+
+        // add default question on click of addQuestion
+        $("#addQuestion").click(function() {
+            addQuestion({});
+        });
+
+        // add each question to the page
+        _.each(questions, function(q) {
+            addQuestion(q);
+        });
+
+        // submit off status of unchecked checkboxes
+        $("form").submit(function() {
+            $(":checkbox").each(function () {
+                if (!$(this).is(":checked")) {
+                    $(this).before("<input name='"+$(this).attr("name")+"' type='hidden' value='off'>");
+                }
+            });
+        });
+    });
+</script>
+{% endcompress %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <h1>{{ page_title }}</h1>
+            <form method="post" action="{% url 'teacher.views.create' course_id %}" class="form" autocomplete="off">
+                {% csrf_token %}
+                {% if is_edit %}
+                <input name="is_edit" type="hidden" value="true">
+                <input name="quiz_id" type="hidden" value="{{ quiz_id }}">
+                {% endif %}
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <label class="control-label" for="title">Quiz title</label>
+                        <input name="title" type="text" class="form-control" id="title" 
+                            value="{{ title }}" placeholder="Enter a title for the quiz">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="control-label" for="numQuestions">Number of questions</label>
+                        <input name="numQuestions" type="text" class="form-control" 
+                            id="numQuestions" value="0" tabindex="-1" readonly>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-4">
+                        <label class="control-label" for="startDate" title="Date on which the quiz is first available">Start date and time</label>
+                        <input name="startDate" type="text" class="form-control" 
+                            {% if is_edit %}value="{{ startDate }}"{% endif %}
+                            id="startDate" >
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label class="control-label" for="softEndDate" title="Date by which the quiz must be completed">Due date and time</label>
+                        <input name="softEndDate" type="text" class="form-control" 
+                            {% if is_edit %}value="{{ softEndDate }}"{% endif %}
+                            id="softEndDate">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label class="control-label" for="endDate" title="Date after which the quiz is no longer available">End date and time</label>
+                        <input name="endDate" type="text" class="form-control" 
+                            {% if is_edit %}value="{{ endDate }}"{% endif %}
+                            id="endDate">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <label class="control-label" for="timeLimit">Time limit in minutes</label>
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                <input name="timeLimitEnabled" type="checkbox" id="timeLimitEnabled"  
+                                    aria-label="Enable time limit." {% if timeLimitEnabled %}checked{% endif %}>
+                            </span>
+                            <input name="timeLimit" type="number" class="form-control" 
+                                id="timeLimit" min="1" value="{{timeLimit}}"
+                                {% if not timeLimitEnabled %}readonly{% endif %}>
+                        </div>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label class="control-label" for="perQuestionTimeLimit">Time limit for each question in minutes</label>
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                <input name="perQuestionTimeLimitEnabled" type="checkbox" id="perQuestionTimeLimitEnabled"
+                                    aria-label="Enable time limit for each question." 
+                                    {% if perQuestionTimeLimitEnabled %}checked{% endif %}>
+                            </span>
+                            <input name="perQuestionTimeLimit" type="number" class="form-control" 
+                                id="perQuestionTimeLimit" min="1" value="{{perQuestionTimeLimit}}"
+                                {% if not perQuestionTimeLimitEnabled %}readonly{% endif%}>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-4">
+                        <label class="control-label" for="perQuestionNumAttempts">Number of attempts per question</label>
+                        <input name="perQuestionNumAttempts" type="number" class="form-control" 
+                            id="perQuestionNumAttempts" min="1" value="{{perQuestionNumAttempts}}" >
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label class="control-label" for="perQuestionGradingType">Grading strategy for each question</label>
+                        <select name="perQuestionGradingType" class="form-control" value="{{gradingType}}" 
+                            id="perQuestionGradingType">
+                            {% for grading_type, grading_title in grading_types_and_titles %}
+                            <option value="{{ grading_type }}">
+                            {{ grading_title }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label class="control-label" for="perQuestionMaxScore">Maximum score per question</label>
+                        <input name="perQuestionMaxScore" type="number" class="form-control" 
+                            id="perQuestionMaxScore" value="{{perQuestionMaxScore}}" min="1">
+                    </div>
+                </div>
+                <br>
+                <button class="btn btn-primary pull-right" type="submit" id="submitButton">Submit</button>
+                <button class="btn btn-default" type="button" id="addQuestion">Add question</button>
+                <p>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -17,10 +17,14 @@
         <div class="col-sm-12">
             <h3>{{title}}</h3>
             <h4>
+                {% if timed_out %}
+                Sorry, your answer was submitted too late.
+                {% else %}
                 {% if correct %}
                 Correct!
                 {% else %}
                 Sorry, that was incorrect.
+                {% endif %}
                 {% endif %}
             </h4>
             <h4>You got {{score}} out of {{max_score}} points</h4>

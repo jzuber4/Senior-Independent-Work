@@ -33,6 +33,24 @@
 
     <body>
         {% include "nav.html" %}
+        {% if messages %}
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-12">
+                    {% for message in messages %}
+                    {% if "error" in message.tags %}
+                    <div class="alert alert-danger alert-dismissable" role="alert">
+                    {% else %}
+                    <div class="alert alert-info alert-dismissable">
+                    {% endif %}
+                      <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
         {% block content %}{% endblock %}
     </body>
 </html>

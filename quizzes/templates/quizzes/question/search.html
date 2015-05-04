@@ -10,7 +10,9 @@ $ ->
     question = new BSTSearchQuestion("treeContainer", {{structure|safe}}) 
 
     # update input when question is changed 
-    question.change () -> $("#inputHuman").val(question.submit().join " ")
+    question.change () -> 
+        $("#inputHuman").val(question.submit().join " ")
+        $("#inputHuman").trigger("change")
 
     # function to check if input is valid
     isValid = (elem) -> 

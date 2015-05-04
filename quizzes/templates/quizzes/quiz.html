@@ -5,13 +5,14 @@
 
 {% block css %}
 {{ block.super }}
-<link rel="stylesheet" href="{% static "quizzes/css/bootstrap-slider.min.css" %}"/>
+<link rel="stylesheet" href="{% static "css/bootstrap-slider.min.css" %}"/>
 {% endblock %}
 
 {% block js %}
 {{ block.super }}
+<script type="text/javascript" charset="utf-8" src="{% static "scripts/jquery.countdown.min.js" %}"></script>
+<script type="text/javascript" charset="utf-8" src="{% static "scripts/bootstrap-slider.min.js" %}"></script>
 <script type="text/javascript" charset="utf-8" src="{% static "quizzes/scripts/histogramChart.js" %}"></script>
-<script type="text/javascript" charset="utf-8" src="{% static "quizzes/scripts/bootstrap-slider.min.js" %}"></script>
 <script type="text/javascript">
     $(function() {
         var scores = {{ scores|safe }},
@@ -46,6 +47,21 @@
         }
         $("#sliderInput").change(_.throttle(drawChart, throttleMilliseconds)); 
         $(window).on('resize',   _.debounce(drawChart, debounceMilliseconds)); 
+
+        // start all countdowns
+        $(".countdown").each(function() {
+            var date = Date.now() + (+$(this).data("milliseconds"));
+            $(this).countdown(date, function(event) {
+                var format = '%H:%M:%S';
+                if(event.offset.days > 0) {
+                    format = '%-d day%!d ' + format;
+                }
+                if(event.offset.weeks > 0) {
+                    format = '%-w week%!w ' + format;
+                }
+                $(this).html(event.strftime(format));
+            });
+        });
     });
 </script>
 {% endblock %}
@@ -54,8 +70,13 @@
 <div class="container">
     <div class="row">
         <div class="col-sm-12">
-            <h2>{{ quiz.quizTitle }}</h2>
-            <p>This quiz starts on <strong>{{ quiz.startDate }}</strong> and ends on <strong>{{ quiz.endDate }}</strong></p>
+            <h2>{{ quiz.title }}</h2>
+            <h4>{{ status_text }}</h4>
+            {% if quiz.quizLeftMilliseconds > 0 %}
+            <h4>Time Left: <span class="countdown" data-milliseconds="{{quiz.quizLeftMilliseconds}}"></span></h4>
+            {% endif %}
+            <p>This quiz first became available on <strong>{{ quiz.startDate }}</strong> and is no longer available after <strong>{{ quiz.endDate }}</strong></p>
+            <p>This quiz is due by <strong>{{ quiz.softEndDate }}</strong></p>
             {% if quiz.numQuestions == 1 %}
             There is only <strong>one question</strong> in this quiz.
             {% else %}
@@ -103,6 +124,11 @@
                     <tr>
                         <th>Question</th>
                         <th>Score</th>
+                        <th>Grading</th>
+                        {% if has_question_time_limits %}
+                        <th>Time Limit</th>
+                        <th>Time Left</th>
+                        {% endif %}
                         <th>Attempts Left</th>
                         <th>Attempt Question</th>
                         <th>Previous Attempts</th>
@@ -113,16 +139,34 @@
                     <tr>
                         <td>{{ question.title }}</td>
                         <td>{{ question.questionScore|floatformat:"-2" }}/{{ question.maxScore|floatformat:"-2" }}</td>
+                        <td>{{ question.grading }}</td>
+                        {% if has_question_time_limits %}
+                        <td>
+                            {# Pad with 0 since timedelta only puts 1 digit in the hours place for times < 10 hours #}
+                            {% if question.maxMilliseconds < 36000000 %}
+                            0{{question.timeLimit}}
+                            {% else %}
+                            {{question.timeLimit}}
+                            {% endif %}
+                        </td>
+                        <td>
+                        {% if question.leftMilliseconds <= 0 %} 
+                        Not Started
+                        {% else %}
+                        <span class="countdown" data-milliseconds="{{question.leftMilliseconds}}"></span>
+                        {% endif %}
+                        </td>
+                        {% endif %}
                         <td>{{ question.leftAttempts }}</td>
                         <td>
                             {% if question.leftAttempts == 0 %}
                             <button class="btn btn-primary btn-block disabled">
-                                No Attempts Left
+                                Attempt 
                             </button>
                             {% else %}
                             <a href="{% url 'quizzes.views.question' course_id quiz.quizId question.questionIdx %}"
                                 class="btn btn-primary btn-block">
-                                Attempt Question
+                                Attempt
                             </a>
                             {% endif %}
                         </td>
@@ -133,9 +177,9 @@
                                     aria-haspopup="true" aria-expanded="false" 
                                     class="btn btn-default btn-block">
                                     {% if question.attempts|length != 1 %}
-                                    {{ question.attempts|length }} Attempts 
+                                    {{ question.attempts|length }}
                                     {% else %}
-                                    1 Attempt    
+                                    1 
                                     {% endif %}
                                     <span class="caret"></span>
                                 </button>
@@ -153,7 +197,9 @@
                                 {% endif %}
                             </div>
                             {% else %}
-                            <button type="button" class="btn btn-default btn-block disabled">No Attempts</button>
+                            <button type="button" class="btn btn-default btn-block disabled">0
+                                <span class="caret"></span>
+                            </button>
                             {% endif %}
                         </td>
                     </tr>

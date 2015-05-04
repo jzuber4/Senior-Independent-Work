@@ -1,6 +1,62 @@
 {% extends "base.html" %}
+{% load staticfiles %}
 
 {% block title %}{{ course_title }}{% endblock %} 
+
+{% block js %}
+{{ block.super }}
+<script type="text/javascript" charset="utf-8" src="{% static "scripts/jquery.countdown.min.js" %}"></script>
+<script type="text/javascript" src="{% static "scripts/bootbox.min.js" %}"></script>
+<script type="text/javascript">
+    $(function() {
+        // start all countdowns
+        $(".countdown").each(function() {
+            var date = Date.now() + (+$(this).data("milliseconds"));
+            $(this).countdown(date, function(event) {
+                var format = '%H:%M:%S';
+                if(event.offset.days > 0) {
+                    format = '%-d day%!d ' + format;
+                }
+                if(event.offset.weeks > 0) {
+                    format = '%-w week%!w ' + format;
+                }
+                $(this).html(event.strftime(format));
+            });
+        });
+
+        // add confirmation dialogs for unstarted quizzes
+        $("a.not-started").each(function() {
+            var link = this;
+            $(this).click(function(e) {
+                e.preventDefault();
+                var milliseconds = +$(link).data('milliseconds');
+                var hours = Math.floor(milliseconds / (60 * 60 * 1000));
+                milliseconds = milliseconds - hours * 60 * 60 * 1000;
+                var minutes = Math.floor(milliseconds / (60 * 1000));
+                var message = "Are you sure you want to start this quiz? You will have ";
+                if (hours == 1) {
+                    message += hours + " hour ";
+                } else if (hours > 1) {
+                    message += hours + " hours ";
+                } 
+                if (minutes == 1) {
+                    message += "and " + minutes + " minute "
+                } else if (minutes > 1) {
+                    message += "and " + minutes + " minutes "
+                }
+                message += "to complete it.";
+
+                bootbox.confirm(message, function(result) {
+                    if (result) {
+                        window.location.href = $(link).attr("href");
+                    }
+                });
+            });
+        });
+
+    });
+</script>
+{% endblock %}
 
 {% block content %}
 {# if there are quizzes, display info about them all #}
@@ -26,17 +82,46 @@
                         <th>Quiz</th>
                         <th>Questions</th>
                         <th>Score</th>
-                        <th>Start</th>
-                        <th>End</th>
+                        <th>Status</th>
+                        <th>Time Left</th>
+                        <th><abbr title="Date the quiz is available to be taken">Release Date</abbr></th>
+                        <th><abbr title="Date the quiz must be submitted">Due Date</abbr></th>
+                        <th><abbr title="Date after which the quiz cannot be viewed">Closing Date</abbr></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for quiz in quizzes %}
                     <tr>
-                        <td><a href="{% url 'quizzes.views.quiz' course_id quiz.quizId %}">{{ quiz.quizTitle }}</a></td>
+                        <td>
+                            <a href="{% url 'quizzes.views.quiz' course_id quiz.quizId %}" 
+                               {% if quiz.is_timed and quiz.not_started %}
+                               class="not-started" data-milliseconds="{{quiz.quizMaxMilliseconds}}"
+                               {% endif %}
+                                >
+                            {{ quiz.title }}
+                            </a>
+                        </td>
                         <td>{{quiz.numQuestions}}</td>
                         <td>{{quiz.quizScore|floatformat:"-2"}}/{{quiz.maxScore|floatformat:"-2"}}</td>
+                        <td>{{quiz.status_text}}</td>
+                        <td>
+                            {% if quiz.is_timed %}
+                            {% if quiz.not_started %}
+                            {# Pad with 0 since timedelta only puts 1 digit in the hours place for times < 10 hours #}
+                            {% if quiz.quizMaxMilliseconds < 36000000 %}
+                            0{{ quiz.timeLeft }}
+                            {% else %}
+                            {{ quiz.timeLeft }}
+                            {% endif %}
+                            {% else %}
+                            <span class="countdown" data-milliseconds="{{quiz.quizLeftMilliseconds}}"></span>
+                            {% endif %}
+                            {% else %}
+                            Not timed
+                            {% endif %}
+                        </td>
                         <td>{{quiz.startDate}}</td>
+                        <td>{{quiz.softEndDate}}</td>
                         <td>{{quiz.endDate}}</td>
                     </tr>
                     {% endfor %}
