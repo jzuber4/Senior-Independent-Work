@@ -40,9 +40,9 @@
                     message += hours + " hours ";
                 } 
                 if (minutes == 1) {
-                    message += "and " + minutes + " minute "
+                    message += minutes + " minute "
                 } else if (minutes > 1) {
-                    message += "and " + minutes + " minutes "
+                    message += minutes + " minutes "
                 }
                 message += "to complete it.";
 
@@ -76,6 +76,7 @@
             {% endif %}
             </p>
             {% if quizzes|length != 0 %}
+            <div class="table-responsive">
             <table class="table" id="quizzes">
                 <thead>
                     <tr>
@@ -127,6 +128,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+          </div>
             {% endif %}
         </div>
     </div>

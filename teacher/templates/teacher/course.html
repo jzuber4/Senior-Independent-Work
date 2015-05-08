@@ -44,6 +44,7 @@
             <a class="btn btn-primary" href="{% url 'teacher.views.create' course_id %}">Add a Quiz</a>
             </p>
             {% if quizzes|length != 0 %}
+            <div class="table-responsive">
             <table class="table" id="quizzes">
                 <thead>
                     <tr>
@@ -96,6 +97,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+            </div>
             {% endif %}
         </div>
     </div>

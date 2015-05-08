@@ -11,7 +11,6 @@ from quiz_service.models import Course, Quiz
 from quiz_service.service import QuestionType, get_question_type, QuizStatus, get_quiz_status
 from quiz_service.service import ResultStatus, get_result_status
 from quiz_service.service import NotFound, NoAttemptsLeft
-from random import gauss
 from time import strptime
 
 # Create your views here.
@@ -142,9 +141,6 @@ def quiz(request, course_id, quiz_id):
 
     # load scores for quiz stats
     scores = qs.get_quiz_statistics(quiz['quizId'])
-    # fake scores:
-    #ms = quiz['maxScore']
-    #scores = filter(lambda s: 0 <= s <= ms, (gauss(ms * 3 / 5, ms / 5) for _ in range(100)))
     d = {
         'course_id': course_id,
         'course_title': Course.objects.get(service_id=course_id).title,

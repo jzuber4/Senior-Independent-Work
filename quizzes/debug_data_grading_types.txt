@@ -1,0 +1,1 @@
+{"MAX":"Maximum of all attempts","AVG":"Average of all attempts"}

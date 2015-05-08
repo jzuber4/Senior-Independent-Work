@@ -112,19 +112,27 @@ def is_admin(username):
     """
     return service.isAdmin(username)
 
+@DebugWrapper(debug_data.get_admin_quiz_info)
 @custom_errors
 def get_admin_quiz_info(quiz_id):
     return json.loads(service.getAdminQuizInfo(quiz_id))
 
+@DebugWrapper(debug_data.get_admin_courses)
+@custom_errors
 def get_admin_courses(username):
+    with open("debug_data_admin_courses", "w") as f:
+        f.write(service.getAdminCourses(username))
     return json.loads(service.getAdminCourses(username))
 
+@DebugWrapper(debug_data.make_quiz)
 def make_quiz(quiz, questions):
     service.makeQuiz(quiz, questions)
 
+@DebugWrapper(debug_data.edit_quiz)
 def edit_quiz(quiz, questions):
     service.editQuiz(quiz, questions)
 
+@DebugWrapper(debug_data.delete_quiz)
 def delete_quiz(quiz_id):
     service.deleteQuiz(quiz_id)
 
@@ -156,6 +164,8 @@ def select_quiz(username, quiz_id):
 def get_quiz_info(username, quiz_id):
     return json.loads(service.getQuizInfo(username, quiz_id))
 
+@DebugWrapper(debug_data.get_quiz_statistics)
+@custom_errors
 def get_quiz_statistics(quiz_id):
     return json.loads(service.getQuizStatistics(quiz_id))
 
@@ -178,6 +188,7 @@ def get_attempt_info(username, quiz_id, question_idx, attempt_idx):
 def get_question_types():
     return json.loads(service.getQuestionTypes())
 
+@DebugWrapper(debug_data.get_grading_types)
 def get_grading_types():
     return json.loads(service.getGradingTypes())
 

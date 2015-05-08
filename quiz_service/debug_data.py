@@ -17,6 +17,27 @@ def read_json_from_file(filename):
 def is_admin():
     return True
 
+def get_admin_quiz_info():
+    return read_json_from_file('debug_data_admin_quiz_info.txt')
+
+def get_admin_courses():
+    return read_json_from_file('debug_data_admin_courses.txt')
+
+def get_quiz_statistics():
+    ms = 50
+    scores = filter(lambda s: 0 <= s <= ms, (random.gauss(ms * 3 / 5, ms / 5) for _ in range(100)))
+    return scores
+
+# make, edit, and delete should appear to do nothing if service is down
+def make_quiz():
+    return
+
+def edit_quiz():
+    return
+
+def delete_quiz():
+    return
+
 # No need to select quiz
 def select_quiz():
     return

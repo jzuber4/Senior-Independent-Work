@@ -36,6 +36,7 @@ def create(request, course_id):
         question_types, question_titles = zip(*sorted(question_types_and_titles.items()))
         grading_types_and_titles = qs.get_grading_types().items()
         d = {
+            'course_id' : course_id,
             'page_title' : 'Create a Quiz',
             'teacher_site': True,
             'title': "",
