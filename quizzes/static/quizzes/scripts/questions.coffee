@@ -76,11 +76,11 @@ class @BSTInsertQuestion
     constructor: (divId, @data, @change = (() -> )) ->
 
         # dimensions and setup for making display of numbers
-        @width  = $("##{divId}").width()
         @numsHeight = 90
         @largerRadius = 30
         @circleRadius = 20
         @circleMargin = 10
+        @width  = (2 * @circleRadius + @circleMargin) * data.length
         @duration = 500
         # svg container for display
 
@@ -100,7 +100,6 @@ class @BSTInsertQuestion
             nodeClass: ((d) -> if d.children then "" else "clickable dashed")
         @tree = new BinaryTree(divId, treeData, opts)
         @inserts = []
-
 
         onClick = (d) =>
             # can only insert in empty nodes
