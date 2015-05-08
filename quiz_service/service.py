@@ -120,8 +120,6 @@ def get_admin_quiz_info(quiz_id):
 @DebugWrapper(debug_data.get_admin_courses)
 @custom_errors
 def get_admin_courses(username):
-    with open("debug_data_admin_courses", "w") as f:
-        f.write(service.getAdminCourses(username))
     return json.loads(service.getAdminCourses(username))
 
 @DebugWrapper(debug_data.make_quiz)

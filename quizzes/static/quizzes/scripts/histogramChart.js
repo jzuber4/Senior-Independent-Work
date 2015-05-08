@@ -57,7 +57,7 @@ function histogramChart(config) {
                 width = divWidth - margin.left - margin.right; 
             } 
             if (useDivHeight) {
-                height = divWidth / 3 - margin.top - margin.bottom; 
+                height = divWidth / 2 - margin.top - margin.bottom; 
             }
 
             // Update the x-scale.

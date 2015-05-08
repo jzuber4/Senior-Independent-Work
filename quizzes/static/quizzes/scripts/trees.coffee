@@ -50,13 +50,14 @@ class @Tree
         # calculate the width and height, depending on the size of the containing div
         @width  = options.width  ? @xScale * ($("##{@divId}").width() - @margin.left - @margin.right)
         @height = options.height ? @yScale * ((0.5 * @width) - @margin.top - @margin.bottom)
+        # limit how small the height can be
         if @width < 400
           @width = 400
-        if @height < 300
-          @height = 300
+        if @height < 400
+          @height = 400
 
         # called to set the radius of a node's circle
-        defaultRadius = @width / 50
+        defaultRadius = @width / 20
         @radius = options.radius ? (() -> defaultRadius)
 
         # create a tree layout with the specified size

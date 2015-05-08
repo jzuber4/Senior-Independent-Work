@@ -57,11 +57,6 @@ text {
     fill: steelblue;
 }
 
-/* style for rest of site *?
-
-.navbar {
-    margin-bottom: 0px;
-}
 
 /* need pre's to wrap for (more) mobile-friendly question descriptions 
  * source: http://stackoverflow.com/a/248013
