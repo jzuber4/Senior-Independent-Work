@@ -8,3 +8,5 @@ migrations/
 # Cached files for compressor 
 CACHE
 
+# virtual environment folder
+venv

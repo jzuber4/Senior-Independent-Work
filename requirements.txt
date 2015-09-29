@@ -2,7 +2,7 @@ Django==1.7
 argparse==1.2.1
 django-appconf==1.0.1
 django-bootstrap3==6.2.2
-django-cas==2.0.3
+django-cas-client==1.2.0
 django-compressor==1.5
 six==1.9.0
 suds==0.4
