@@ -101,7 +101,7 @@ QUIZ_SERVICE_URL = 'http://10.8.241.134:8080/Initial/services/Main?wsdl'
 # in debug mode, the service catches errors that occur with the SOAP
 # service (for instance, if it cannot be reached over the network)
 # and returns fake data for the request
-QUIZ_SERVICE_DEBUG = False
+QUIZ_SERVICE_DEBUG = True
 
 
 # Static files (CSS, JavaScript, Images)
